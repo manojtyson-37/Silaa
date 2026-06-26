@@ -47,6 +47,11 @@ def create_accessory_item(payload: AccessoryItemIn, db: Session = Depends(get_db
     return item
 
 
+@router.get("/accessory-items", response_model=list[AccessoryItemOut])
+def list_accessory_items(db: Session = Depends(get_db)):
+    return db.query(AccessoryItem).all()
+
+
 @router.post("/accessory-items/{item_id}/receive")
 def grn(item_id: int, payload: GRNIn, db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
     if db.get(AccessoryItem, item_id) is None:

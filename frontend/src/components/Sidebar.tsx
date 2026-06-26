@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, Shirt } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, Shirt, Package } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Overview", icon: LayoutGrid },
   { href: "/styles", label: "Styles & Variants", icon: Shirt },
   { href: "/fabric", label: "Fabric Inventory", icon: Boxes },
+  { href: "/accessories", label: "Accessory Inventory", icon: Package },
   { href: "/production", label: "Production Orders", icon: Factory },
 ];
 

@@ -29,6 +29,14 @@ export type FabricLot = {
   dye_lot_no: string | null;
 };
 
+export type AccessoryItem = {
+  id: number;
+  name: string;
+  type: string;
+  consumption_uom: string;
+  default_cost: string | null;
+};
+
 export type Style = { id: number; name: string; category: string | null; collection: string | null };
 export type StyleVariant = {
   id: number;
