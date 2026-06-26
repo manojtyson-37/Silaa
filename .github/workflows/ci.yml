@@ -1,0 +1,41 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test-and-contract-check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: erp
+          POSTGRES_PASSWORD: erp
+          POSTGRES_DB: erp
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://erp:erp@localhost:5432/erp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt pytest
+      - name: Run migrations
+        run: cd backend && alembic upgrade head
+      - name: Run tests
+        run: cd backend && pytest -q
+      - name: Generate OpenAPI spec
+        run: cd backend && python -c "import json; from app.main import app; json.dump(app.openapi(), open('openapi.generated.json', 'w'), indent=2)"
+      - name: Check committed spec matches generated spec
+        run: |
+          if ! diff -q backend/openapi.json backend/openapi.generated.json > /dev/null; then
+            echo "::error::Committed openapi.json is stale. Run the generation step and commit the result."
+            diff backend/openapi.json backend/openapi.generated.json || true
+            exit 1
+          fi
