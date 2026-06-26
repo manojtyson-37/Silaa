@@ -1,21 +1,28 @@
 import Link from "next/link";
+import { Boxes, Factory, Shirt } from "lucide-react";
+import { Card, PageHeader } from "@/components/ui";
+
+const CARDS = [
+  { href: "/styles", title: "Styles & Variants", desc: "Manage styles, SKUs, and BOM versions", icon: Shirt },
+  { href: "/fabric", title: "Fabric Inventory", desc: "Lots, balances, dye-lot tracking", icon: Boxes },
+  { href: "/production", title: "Production Orders", desc: "Cutting, stitching, QC, rework", icon: Factory },
+];
 
 export default function Home() {
   return (
-    <main className="max-w-2xl mx-auto py-16 px-4">
-      <h1 className="text-2xl font-semibold mb-1">Apparel ERP — Phase 1</h1>
-      <p className="text-gray-500 mb-8">Fabric, Accessories, Production</p>
-      <nav className="flex flex-col gap-3">
-        <Link className="rounded border px-4 py-3 hover:bg-gray-50" href="/styles">
-          Styles &amp; Variants
-        </Link>
-        <Link className="rounded border px-4 py-3 hover:bg-gray-50" href="/fabric">
-          Fabric Inventory
-        </Link>
-        <Link className="rounded border px-4 py-3 hover:bg-gray-50" href="/production">
-          Production Orders
-        </Link>
-      </nav>
+    <main className="max-w-5xl mx-auto px-8 py-10">
+      <PageHeader title="Overview" subtitle="Fabric, Accessories, Production — Phase 1" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {CARDS.map(({ href, title, desc, icon: Icon }) => (
+          <Link key={href} href={href}>
+            <Card className="p-5 hover:border-accent transition-colors duration-150 h-full">
+              <Icon size={20} className="text-accent mb-3" strokeWidth={2} />
+              <p className="font-medium text-foreground">{title}</p>
+              <p className="text-sm text-muted-foreground mt-1">{desc}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </main>
   );
 }

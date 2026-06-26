@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { api, Style, StyleVariant } from "@/lib/api";
+import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
 
 export default async function StylesPage() {
   const styles = await api.get<Style[]>("/styles");
@@ -8,42 +8,45 @@ export default async function StylesPage() {
   );
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-4">
-      <Link href="/" className="text-sm text-gray-500">
-        &larr; Home
-      </Link>
-      <h1 className="text-2xl font-semibold mt-2 mb-6">Styles &amp; Variants</h1>
+    <main className="max-w-5xl mx-auto px-8 py-10">
+      <PageHeader title="Styles & Variants" subtitle={`${styles.length} style${styles.length === 1 ? "" : "s"}`} />
 
-      {styles.length === 0 && <p className="text-gray-500">No styles yet.</p>}
+      {styles.length === 0 && (
+        <Card className="p-8 text-center text-muted-foreground text-sm">No styles yet.</Card>
+      )}
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5">
         {styles.map((style, i) => (
-          <section key={style.id} className="rounded border p-4">
-            <h2 className="font-medium">{style.name}</h2>
-            <p className="text-sm text-gray-500 mb-3">
-              {style.category} · {style.collection}
-            </p>
-            <table className="w-full text-sm">
-              <thead className="text-left text-gray-500">
+          <Card key={style.id} className="p-5">
+            <div className="mb-3">
+              <h2 className="font-medium text-foreground">{style.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {style.category} · {style.collection}
+              </p>
+            </div>
+            <Table>
+              <thead>
                 <tr>
-                  <th className="py-1 pr-4">SKU</th>
-                  <th className="pr-4">Color</th>
-                  <th className="pr-4">Size</th>
-                  <th>Status</th>
+                  <Th>SKU</Th>
+                  <Th>Color</Th>
+                  <Th>Size</Th>
+                  <Th>Status</Th>
                 </tr>
               </thead>
               <tbody>
                 {variantsByStyle[i].map((v) => (
-                  <tr key={v.id} className="border-t">
-                    <td className="py-1 pr-4">{v.sku_code}</td>
-                    <td className="pr-4">{v.color}</td>
-                    <td className="pr-4">{v.size}</td>
-                    <td>{v.status}</td>
+                  <tr key={v.id}>
+                    <Td className="font-mono text-xs">{v.sku_code}</Td>
+                    <Td>{v.color}</Td>
+                    <Td>{v.size}</Td>
+                    <Td>
+                      <StatusPill value={v.status} />
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </section>
+            </Table>
+          </Card>
         ))}
       </div>
     </main>

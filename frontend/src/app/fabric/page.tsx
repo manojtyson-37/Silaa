@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { api, FabricLot } from "@/lib/api";
+import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 
 type Balance = { fabric_lot_id: number; balance: string };
 
@@ -10,33 +10,33 @@ export default async function FabricPage() {
   );
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-4">
-      <Link href="/" className="text-sm text-gray-500">
-        &larr; Home
-      </Link>
-      <h1 className="text-2xl font-semibold mt-2 mb-6">Fabric Inventory</h1>
+    <main className="max-w-5xl mx-auto px-8 py-10">
+      <PageHeader title="Fabric Inventory" subtitle={`${lots.length} lot${lots.length === 1 ? "" : "s"}`} />
 
-      <table className="w-full text-sm border rounded">
-        <thead className="text-left text-gray-500 bg-gray-50">
-          <tr>
-            <th className="py-2 px-3">Lot</th>
-            <th className="px-3">Dye Lot</th>
-            <th className="px-3">Cost / unit</th>
-            <th className="px-3">Balance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lots.map((lot, i) => (
-            <tr key={lot.id} className="border-t">
-              <td className="py-2 px-3">#{lot.id}</td>
-              <td className="px-3">{lot.dye_lot_no ?? "—"}</td>
-              <td className="px-3">{lot.cost_per_uom}</td>
-              <td className="px-3">{balances[i].balance}</td>
+      {lots.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground text-sm">No fabric lots yet.</Card>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Lot</Th>
+              <Th>Dye Lot</Th>
+              <Th>Cost / unit</Th>
+              <Th>Balance</Th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {lots.length === 0 && <p className="text-gray-500 mt-4">No fabric lots yet.</p>}
+          </thead>
+          <tbody>
+            {lots.map((lot, i) => (
+              <tr key={lot.id}>
+                <Td className="font-mono text-xs">#{lot.id}</Td>
+                <Td className="text-muted-foreground">{lot.dye_lot_no ?? "—"}</Td>
+                <Td>₹{lot.cost_per_uom}</Td>
+                <Td className="font-medium">{balances[i].balance}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
     </main>
   );
 }
