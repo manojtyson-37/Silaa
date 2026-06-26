@@ -26,18 +26,18 @@ export default async function StylesPage() {
             <table className="w-full text-sm">
               <thead className="text-left text-gray-500">
                 <tr>
-                  <th className="py-1">SKU</th>
-                  <th>Color</th>
-                  <th>Size</th>
+                  <th className="py-1 pr-4">SKU</th>
+                  <th className="pr-4">Color</th>
+                  <th className="pr-4">Size</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {variantsByStyle[i].map((v) => (
                   <tr key={v.id} className="border-t">
-                    <td className="py-1">{v.sku_code}</td>
-                    <td>{v.color}</td>
-                    <td>{v.size}</td>
+                    <td className="py-1 pr-4">{v.sku_code}</td>
+                    <td className="pr-4">{v.color}</td>
+                    <td className="pr-4">{v.size}</td>
                     <td>{v.status}</td>
                   </tr>
                 ))}

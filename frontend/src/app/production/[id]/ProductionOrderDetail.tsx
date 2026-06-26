@@ -166,31 +166,31 @@ function CuttingSection({
       {open && (
         <div className="rounded border bg-gray-50 p-3 flex flex-col gap-2">
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Fabric lot ID"
             value={form.fabric_lot_id}
             onChange={(e) => setForm({ ...form, fabric_lot_id: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Planned fabric qty"
             value={form.planned_fabric_qty}
             onChange={(e) => setForm({ ...form, planned_fabric_qty: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Actual fabric qty"
             value={form.actual_fabric_qty}
             onChange={(e) => setForm({ ...form, actual_fabric_qty: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Cut pieces"
             value={form.cut_pieces_qty}
             onChange={(e) => setForm({ ...form, cut_pieces_qty: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Wastage"
             value={form.wastage_qty}
             onChange={(e) => setForm({ ...form, wastage_qty: e.target.value })}
@@ -258,7 +258,7 @@ function StitchingSection({
       {open && (
         <div className="rounded border bg-gray-50 p-3 flex flex-col gap-2 mt-2">
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Sent qty"
             value={form.sent_qty}
             onChange={(e) => setForm({ ...form, sent_qty: e.target.value })}
@@ -341,13 +341,13 @@ function BatchRow({
       {panel === "receive" && (
         <div className="rounded border bg-gray-50 p-3 flex flex-col gap-2 mt-2">
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Received qty"
             value={receiveForm.received_qty}
             onChange={(e) => setReceiveForm({ ...receiveForm, received_qty: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Rejected qty"
             value={receiveForm.rejected_qty}
             onChange={(e) => setReceiveForm({ ...receiveForm, rejected_qty: e.target.value })}
@@ -361,7 +361,7 @@ function BatchRow({
       {panel === "qc" && (
         <div className="rounded border bg-gray-50 p-3 flex flex-col gap-2 mt-2">
           <select
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             value={qcForm.qc_state}
             onChange={(e) => setQcForm({ ...qcForm, qc_state: e.target.value })}
           >
@@ -372,13 +372,13 @@ function BatchRow({
             ))}
           </select>
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Qty"
             value={qcForm.qty}
             onChange={(e) => setQcForm({ ...qcForm, qty: e.target.value })}
           />
           <input
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="Variant ID"
             value={qcForm.variant_id}
             onChange={(e) => setQcForm({ ...qcForm, variant_id: e.target.value })}

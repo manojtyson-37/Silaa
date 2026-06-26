@@ -20,18 +20,18 @@ export default async function FabricPage() {
         <thead className="text-left text-gray-500 bg-gray-50">
           <tr>
             <th className="py-2 px-3">Lot</th>
-            <th>Dye Lot</th>
-            <th>Cost / unit</th>
-            <th>Balance</th>
+            <th className="px-3">Dye Lot</th>
+            <th className="px-3">Cost / unit</th>
+            <th className="px-3">Balance</th>
           </tr>
         </thead>
         <tbody>
           {lots.map((lot, i) => (
             <tr key={lot.id} className="border-t">
               <td className="py-2 px-3">#{lot.id}</td>
-              <td>{lot.dye_lot_no ?? "—"}</td>
-              <td>{lot.cost_per_uom}</td>
-              <td>{balances[i].balance}</td>
+              <td className="px-3">{lot.dye_lot_no ?? "—"}</td>
+              <td className="px-3">{lot.cost_per_uom}</td>
+              <td className="px-3">{balances[i].balance}</td>
             </tr>
           ))}
         </tbody>
