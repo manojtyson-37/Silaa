@@ -1,5 +1,6 @@
 import { api, Style, StyleVariant } from "@/lib/api";
 import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
+import NewStyleForm from "./NewStyleForm";
 
 export default async function StylesPage() {
   const styles = await api.get<Style[]>("/styles");
@@ -10,6 +11,8 @@ export default async function StylesPage() {
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">
       <PageHeader title="Styles & Variants" subtitle={`${styles.length} style${styles.length === 1 ? "" : "s"}`} />
+
+      <NewStyleForm />
 
       {styles.length === 0 && (
         <Card className="p-8 text-center text-muted-foreground text-sm">No styles yet.</Card>
