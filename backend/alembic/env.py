@@ -22,7 +22,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 if os.environ.get("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+    # configparser's interpolation treats % specially -- escape it (URL-encoded
+    # passwords contain %XX sequences) so set_main_option doesn't choke.
+    config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"].replace("%", "%%"))
 
 target_metadata = Base.metadata
 
