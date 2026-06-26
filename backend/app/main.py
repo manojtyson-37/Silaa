@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import every model module so Base.metadata is fully populated before any
 # create_all() / Alembic autogenerate runs.
@@ -23,6 +24,13 @@ from app.production.router import router as production_router
 from app.finished_goods.router import router as finished_goods_router
 
 app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # ponytail: local dev only, add real origins at deploy time
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 wiring.configure()
 

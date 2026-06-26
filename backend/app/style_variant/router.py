@@ -44,6 +44,11 @@ def create_style(payload: StyleIn, db: Session = Depends(get_db)):
     return style
 
 
+@router.get("/styles", response_model=list[StyleOut])
+def list_styles(db: Session = Depends(get_db)):
+    return db.query(Style).all()
+
+
 @router.post("/styles/{style_id}/variants", response_model=VariantOut)
 def create_variant(style_id: int, payload: VariantIn, db: Session = Depends(get_db)):
     if db.get(Style, style_id) is None:

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_default_warehouse_id
 from app.db import get_db
 from app.finished_goods.service import write_production_complete
-from app.production.models import ProductionEvent, ProductionOrder, QCState, StitchingBatch
+from app.production.models import CuttingRecord, ProductionEvent, ProductionOrder, ProductionOrderVariant, QCState, StitchingBatch
 from app.production.service import (
     apply_qc,
     apply_rework,
@@ -90,12 +90,23 @@ def create_order(payload: ProductionOrderIn, db: Session = Depends(get_db)):
     return order
 
 
+@router.get("/production-orders", response_model=list[ProductionOrderOut])
+def list_orders(db: Session = Depends(get_db)):
+    return db.query(ProductionOrder).all()
+
+
 @router.get("/production-orders/{order_id}", response_model=ProductionOrderOut)
 def get_order(order_id: int, db: Session = Depends(get_db)):
     order = db.get(ProductionOrder, order_id)
     if order is None:
         raise HTTPException(404, "ProductionOrder not found")
     return order
+
+
+@router.get("/production-orders/{order_id}/variants")
+def list_order_variants(order_id: int, db: Session = Depends(get_db)):
+    rows = db.query(ProductionOrderVariant).filter_by(production_order_id=order_id).all()
+    return [{"variant_id": r.variant_id, "planned_qty": r.planned_qty} for r in rows]
 
 
 @router.get("/production-orders/{order_id}/events")
@@ -112,12 +123,32 @@ def get_events(order_id: int, db: Session = Depends(get_db)):
     ]
 
 
+@router.get("/production-orders/{order_id}/cutting-records")
+def list_cutting_records(order_id: int, db: Session = Depends(get_db)):
+    records = db.query(CuttingRecord).filter_by(production_order_id=order_id).all()
+    return [
+        {"id": r.id, "fabric_lot_id": r.fabric_lot_id, "actual_fabric_qty": r.actual_fabric_qty,
+         "cut_pieces_qty": r.cut_pieces_qty, "wastage_qty": r.wastage_qty}
+        for r in records
+    ]
+
+
 @router.post("/production-orders/{order_id}/cutting-records")
 def cutting(order_id: int, payload: CuttingIn, db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
     if db.get(ProductionOrder, order_id) is None:
         raise HTTPException(404, "ProductionOrder not found")
     record = record_cutting(db, production_order_id=order_id, warehouse_id=warehouse_id, **payload.model_dump())
     return {"id": record.id, "actual_fabric_qty": record.actual_fabric_qty}
+
+
+@router.get("/production-orders/{order_id}/stitching-batches")
+def list_batches(order_id: int, db: Session = Depends(get_db)):
+    batches = db.query(StitchingBatch).filter_by(production_order_id=order_id).all()
+    return [
+        {"id": b.id, "vendor_id": b.vendor_id, "in_house": b.in_house, "sent_qty": b.sent_qty,
+         "received_qty": b.received_qty, "rejected_qty": b.rejected_qty, "qc_state": b.qc_state}
+        for b in batches
+    ]
 
 
 @router.post("/production-orders/{order_id}/stitching-batches")

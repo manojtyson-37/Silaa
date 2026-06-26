@@ -72,6 +72,16 @@ def create_fabric_item(payload: FabricItemIn, db: Session = Depends(get_db)):
     return item
 
 
+@router.get("/fabric-items", response_model=list[FabricItemOut])
+def list_fabric_items(db: Session = Depends(get_db)):
+    return db.query(FabricItem).all()
+
+
+@router.get("/fabric-lots", response_model=list[LotOut])
+def list_fabric_lots(db: Session = Depends(get_db)):
+    return db.query(FabricLot).all()
+
+
 @router.post("/fabric-lots", response_model=LotOut)
 def grn(payload: GRNIn, db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
     item = db.get(FabricItem, payload.fabric_item_id)
