@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.core.ledger_base import Direction
+from app.core.ref_validator import validate_reference
 from app.fabric_inventory.models import FabricLedgerEntry, FabricLot
 from app.finished_goods.models import FinishedGoodsLedgerEntry
 
@@ -77,12 +78,19 @@ def record_movement(
     warehouse_id: int,
     reason_code: str | None,
     created_by: str,
+    reference_type: str | None = None,
+    reference_id: int | None = None,
+    commit: bool = True,
 ) -> FinishedGoodsLedgerEntry:
     """Manual entry path for every txn_type EXCEPT production_complete
     (sale/return/damage/photoshoot_sample/influencer_sample/replacement_order/
-    adjustment/stock_audit) — see write_production_complete for that one."""
+    adjustment/stock_audit) — see write_production_complete for that one.
+
+    commit=False lets a caller (e.g. orders.fulfill_order, writing multiple
+    lines) fold this write into a larger atomic transaction."""
     if txn_type == "production_complete":
         raise ValueError("production_complete entries must go through write_production_complete")
+    validate_reference(session, reference_type, reference_id)
 
     entry = FinishedGoodsLedgerEntry(
         variant_id=variant_id,
@@ -91,10 +99,15 @@ def record_movement(
         direction=direction.value,
         txn_type=txn_type,
         reason_code=reason_code,
+        reference_type=reference_type,
+        reference_id=reference_id,
         created_by=created_by,
     )
     session.add(entry)
-    session.commit()
+    if commit:
+        session.commit()
+    else:
+        session.flush()
     return entry
 
 

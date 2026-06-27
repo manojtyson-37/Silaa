@@ -12,6 +12,7 @@ from app.style_variant import models as style_models  # noqa: F401
 from app.bom import models as bom_models  # noqa: F401
 from app.production import models as production_models  # noqa: F401
 from app.finished_goods import models as fg_models  # noqa: F401
+from app.orders import models as orders_models  # noqa: F401
 
 from app import wiring
 from app.procurement.router import router as procurement_router
@@ -22,6 +23,7 @@ from app.style_variant.router import router as style_router
 from app.bom.router import router as bom_router
 from app.production.router import router as production_router
 from app.finished_goods.router import router as finished_goods_router
+from app.orders.router import router as orders_router
 
 app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0")
 
@@ -42,6 +44,7 @@ app.include_router(style_router)
 app.include_router(bom_router)
 app.include_router(production_router)
 app.include_router(finished_goods_router)
+app.include_router(orders_router)
 
 
 @app.get("/health")

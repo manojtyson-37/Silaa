@@ -1,10 +1,16 @@
-import { api, FabricLot } from "@/lib/api";
+import { api, FabricItem, FabricLot, Supplier } from "@/lib/api";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
+import NewFabricItemForm from "./NewFabricItemForm";
+import GRNForm from "./GRNForm";
 
 type Balance = { fabric_lot_id: number; balance: string };
 
 export default async function FabricPage() {
-  const lots = await api.get<FabricLot[]>("/fabric-lots");
+  const [lots, fabricItems, suppliers] = await Promise.all([
+    api.get<FabricLot[]>("/fabric-lots"),
+    api.get<FabricItem[]>("/fabric-items"),
+    api.get<Supplier[]>("/suppliers"),
+  ]);
   const balances = await Promise.all(
     lots.map((l) => api.get<Balance>(`/fabric-lots/${l.id}/balance`))
   );
@@ -12,6 +18,12 @@ export default async function FabricPage() {
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">
       <PageHeader title="Fabric Inventory" subtitle={`${lots.length} lot${lots.length === 1 ? "" : "s"}`} />
+      <div className="flex gap-4 mb-1">
+        <NewFabricItemForm />
+        {fabricItems.length > 0 && suppliers.length > 0 && (
+          <GRNForm fabricItems={fabricItems} suppliers={suppliers} />
+        )}
+      </div>
 
       {lots.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground text-sm">No fabric lots yet.</Card>

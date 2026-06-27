@@ -1,0 +1,94 @@
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_default_warehouse_id
+from app.db import get_db
+from app.orders.models import SalesOrder, SalesOrderLine
+from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order
+
+router = APIRouter(tags=["orders"])
+
+
+class SalesOrderLineIn(BaseModel):
+    variant_id: int
+    qty: Decimal
+    unit_price: Decimal
+
+
+class SalesOrderIn(BaseModel):
+    customer_name: str
+    lines: list[SalesOrderLineIn]
+    created_by: str
+
+
+class SalesOrderOut(BaseModel):
+    id: int
+    customer_name: str
+    status: str
+
+
+@router.post("/sales-orders", response_model=SalesOrderOut)
+def create_order(payload: SalesOrderIn, db: Session = Depends(get_db)):
+    order = create_sales_order(
+        db,
+        customer_name=payload.customer_name,
+        lines=[l.model_dump() for l in payload.lines],
+        created_by=payload.created_by,
+    )
+    return order
+
+
+@router.get("/sales-orders", response_model=list[SalesOrderOut])
+def list_orders(db: Session = Depends(get_db)):
+    return db.query(SalesOrder).all()
+
+
+@router.get("/sales-orders/{order_id}")
+def get_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    lines = db.query(SalesOrderLine).filter_by(sales_order_id=order_id).all()
+    return {
+        "id": order.id,
+        "customer_name": order.customer_name,
+        "status": order.status,
+        "lines": [
+            {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price}
+            for l in lines
+        ],
+    }
+
+
+@router.post("/sales-orders/{order_id}/fulfill", response_model=SalesOrderOut)
+def fulfill(
+    order_id: int,
+    created_by: str,
+    db: Session = Depends(get_db),
+    warehouse_id: int = Depends(get_default_warehouse_id),
+):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    try:
+        fulfill_order(db, order=order, warehouse_id=warehouse_id, created_by=created_by)
+    except InsufficientStockError as exc:
+        raise HTTPException(409, str(exc))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return order
+
+
+@router.post("/sales-orders/{order_id}/cancel", response_model=SalesOrderOut)
+def cancel(order_id: int, db: Session = Depends(get_db)):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    try:
+        cancel_order(db, order=order)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return order

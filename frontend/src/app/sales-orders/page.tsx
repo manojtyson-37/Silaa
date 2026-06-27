@@ -1,0 +1,43 @@
+import { api, SalesOrder } from "@/lib/api";
+import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
+import NewSalesOrderForm from "./NewSalesOrderForm";
+import OrderActions from "./OrderActions";
+
+export default async function SalesOrdersPage() {
+  const orders = await api.get<SalesOrder[]>("/sales-orders");
+
+  return (
+    <main className="max-w-5xl mx-auto px-8 py-10">
+      <PageHeader title="Sales Orders" subtitle={`${orders.length} order${orders.length === 1 ? "" : "s"}`} />
+
+      <NewSalesOrderForm />
+
+      {orders.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground text-sm">No sales orders yet.</Card>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Order</Th>
+              <Th>Customer</Th>
+              <Th>Status</Th>
+              <Th>Action</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order.id}>
+                <Td className="font-mono text-xs">#{order.id}</Td>
+                <Td>{order.customer_name}</Td>
+                <Td>
+                  <StatusPill value={order.status} />
+                </Td>
+                <Td>{order.status === "draft" && <OrderActions orderId={order.id} />}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </main>
+  );
+}

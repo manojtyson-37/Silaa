@@ -47,6 +47,11 @@ def create_supplier(payload: SupplierIn, db: Session = Depends(get_db)):
     return supplier
 
 
+@router.get("/suppliers", response_model=list[SupplierOut])
+def list_suppliers(db: Session = Depends(get_db)):
+    return db.query(Supplier).all()
+
+
 @router.post("/purchase-orders", response_model=PurchaseOrderOut)
 def create_purchase_order(payload: PurchaseOrderIn, db: Session = Depends(get_db)):
     po = PurchaseOrder(supplier_id=payload.supplier_id, status=POStatus.DRAFT.value)
@@ -56,6 +61,35 @@ def create_purchase_order(payload: PurchaseOrderIn, db: Session = Depends(get_db
         db.add(PurchaseOrderLine(po_id=po.id, **line.model_dump()))
     db.commit()
     return po
+
+
+@router.get("/purchase-orders", response_model=list[PurchaseOrderOut])
+def list_purchase_orders(db: Session = Depends(get_db)):
+    return db.query(PurchaseOrder).all()
+
+
+@router.get("/purchase-orders/{po_id}")
+def get_purchase_order(po_id: int, db: Session = Depends(get_db)):
+    po = db.get(PurchaseOrder, po_id)
+    if po is None:
+        raise HTTPException(404, "PurchaseOrder not found")
+    lines = db.query(PurchaseOrderLine).filter_by(po_id=po_id).all()
+    return {
+        "id": po.id,
+        "supplier_id": po.supplier_id,
+        "status": po.status,
+        "lines": [
+            {
+                "id": l.id,
+                "component_type": l.component_type,
+                "component_id": l.component_id,
+                "ordered_qty": l.ordered_qty,
+                "ordered_uom": l.ordered_uom,
+                "agreed_price": l.agreed_price,
+            }
+            for l in lines
+        ],
+    }
 
 
 @router.patch("/purchase-orders/{po_id}/approve", response_model=PurchaseOrderOut)

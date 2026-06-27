@@ -21,6 +21,15 @@ export const api = {
     request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
 };
 
+export type FabricItem = {
+  id: number;
+  name: string;
+  composition: string | null;
+  gsm: number | null;
+  width: string | null;
+  consumption_uom: string;
+};
+
 export type FabricLot = {
   id: number;
   fabric_item_id: number;
@@ -61,3 +70,19 @@ export type ProductionEvent = {
   created_at: string;
   created_by: string;
 };
+
+export type Supplier = { id: number; name: string; type: string };
+export type PurchaseOrder = { id: number; supplier_id: number; status: string };
+export type PurchaseOrderLine = {
+  id: number;
+  component_type: string;
+  component_id: number;
+  ordered_qty: string;
+  ordered_uom: string;
+  agreed_price: string;
+};
+export type PurchaseOrderDetail = PurchaseOrder & { lines: PurchaseOrderLine[] };
+
+export type SalesOrder = { id: number; customer_name: string; status: string };
+export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string };
+export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };
