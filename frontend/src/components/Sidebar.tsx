@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, LogOut, Shirt, Package, ClipboardList, ShoppingCart } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, LogOut, Shirt, Package, ClipboardList, ShoppingCart, BarChart3 } from "lucide-react";
 import { clearClientToken } from "@/lib/clientAuth";
 
 const NAV = [
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/accessories", label: "Accessory Inventory", icon: Package },
   { href: "/production", label: "Production Orders", icon: Factory },
   { href: "/sales-orders", label: "Sales Orders", icon: ShoppingCart },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export default function Sidebar() {

@@ -122,3 +122,20 @@ export type DashboardSummary = {
   pending_purchase_orders: number;
   recent_events: DashboardEvent[];
 };
+
+export type FabricVarianceRow = {
+  cutting_record_id: number;
+  production_order_id: number;
+  style_id: number;
+  fabric_lot_id: number;
+  planned_fabric_qty: string;
+  actual_fabric_qty: string;
+  variance_qty: string;
+  wastage_qty: string;
+};
+
+export type WastageRejectionReport = {
+  wastage_by_style: { style_id: number; wastage_qty: string }[];
+  rejection_by_vendor: { vendor_id: number | null; rejected_qty: string }[];
+  scrapped_by_style: { style_id: number; scrapped_qty: string }[];
+};
