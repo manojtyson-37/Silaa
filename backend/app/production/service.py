@@ -4,7 +4,8 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.bom.models import BOM
+from app.accessory_inventory.service import issue_accessory
+from app.bom.models import BOM, BOMItem
 from app.core.ledger_base import Direction
 from app.fabric_inventory.service import issue_fabric
 from app.production.models import (
@@ -119,16 +120,43 @@ def create_stitching_batch(
     sent_qty: Decimal,
     vendor_id: int | None,
     in_house: bool,
+    warehouse_id: int,
     created_by: str,
+    labor_cost: Decimal = Decimal("0"),
 ) -> StitchingBatch:
+    """Issues accessory stock per the production order's active BOM
+    (qty_per_unit * sent_qty, style-wide items only — ponytail: per-variant
+    BOMItem overrides aren't applied here since a stitching batch isn't
+    split by variant; revisit if variant-level accessory costs diverge
+    enough to matter) in the same transaction as creating the batch."""
     batch = StitchingBatch(
         production_order_id=production_order_id,
         vendor_id=vendor_id,
         in_house=in_house,
         sent_qty=sent_qty,
+        labor_cost=labor_cost,
     )
     session.add(batch)
     session.flush()
+
+    order = session.get(ProductionOrder, production_order_id)
+    accessory_items = (
+        session.query(BOMItem)
+        .filter_by(bom_version_id=order.bom_version_id, component_type="accessory", variant_id=None)
+        .all()
+    )
+    for bom_item in accessory_items:
+        issue_accessory(
+            session,
+            accessory_item_id=bom_item.component_id,
+            qty=bom_item.qty_per_unit * sent_qty,
+            warehouse_id=warehouse_id,
+            reference_type="production_order",
+            reference_id=production_order_id,
+            created_by=created_by,
+            commit=False,
+        )
+
     _log_event(
         session, production_order_id, "stitching_sent", {"batch_id": batch.id, "sent_qty": str(sent_qty)}, created_by
     )

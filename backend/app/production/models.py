@@ -60,6 +60,7 @@ class StitchingBatch(Base):
     received_qty: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     rejected_qty: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     qc_state: Mapped[str] = mapped_column(String, nullable=True)
+    labor_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
 
 
 class ReworkRecord(Base):

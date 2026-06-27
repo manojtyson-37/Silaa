@@ -53,6 +53,7 @@ def issue_accessory(
     reference_type: str,
     reference_id: int,
     created_by: str,
+    commit: bool = True,
 ) -> AccessoryLedgerEntry:
     item = session.query(AccessoryItem).filter_by(id=accessory_item_id).with_for_update().one()
     validate_reference(session, reference_type, reference_id)
@@ -75,7 +76,10 @@ def issue_accessory(
         created_by=created_by,
     )
     session.add(entry)
-    session.commit()
+    if commit:
+        session.commit()
+    else:
+        session.flush()
     return entry
 
 

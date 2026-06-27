@@ -90,3 +90,21 @@ export type PurchaseOrderDetail = PurchaseOrder & { lines: PurchaseOrderLine[] }
 export type SalesOrder = { id: number; customer_name: string; status: string };
 export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string };
 export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };
+
+export type CostBreakdown = {
+  fabric_cost: string;
+  accessory_cost: string;
+  labor_cost: string;
+  total_cost: string;
+  qty_passed: string;
+  unit_cost: string | null;
+};
+
+export type OrderMarginLine = {
+  variant_id: number;
+  qty: string;
+  unit_price: string;
+  unit_cost: string;
+  margin: string;
+};
+export type OrderMargin = { order_id: number; lines: OrderMarginLine[]; total_margin: string };

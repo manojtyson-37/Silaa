@@ -243,12 +243,12 @@ function StitchingSection({
   onBatchUpdated: (b: StitchingBatch) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ sent_qty: "", in_house: true });
+  const [form, setForm] = useState({ sent_qty: "", in_house: true, labor_cost: "" });
 
   const submitNewBatch = async () => {
     const result = await api.post<{ id: number; sent_qty: string }>(
       `/production-orders/${orderId}/stitching-batches`,
-      { sent_qty: form.sent_qty, in_house: form.in_house, created_by: "ui" },
+      { sent_qty: form.sent_qty, in_house: form.in_house, labor_cost: form.labor_cost || "0", created_by: "ui" },
       getClientToken()
     );
     onBatchAdded({
@@ -279,6 +279,11 @@ function StitchingSection({
             placeholder="Sent qty"
             value={form.sent_qty}
             onChange={(e) => setForm({ ...form, sent_qty: e.target.value })}
+          />
+          <Input
+            placeholder="Labor cost (optional)"
+            value={form.labor_cost}
+            onChange={(e) => setForm({ ...form, labor_cost: e.target.value })}
           />
           <label className="text-sm flex items-center gap-2 text-foreground">
             <input

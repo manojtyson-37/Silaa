@@ -96,7 +96,7 @@ def test_qc_pass_writes_fg_ledger_with_correct_unit_cost(session):
     )
     batch = create_stitching_batch(
         session, production_order_id=order.id, sent_qty=Decimal(10),
-        vendor_id=None, in_house=True, created_by="t",
+        vendor_id=None, in_house=True, warehouse_id=wh.id, created_by="t",
     )
     receive_stitching(session, batch=batch, received_qty=Decimal(10), rejected_qty=Decimal(0), created_by="t")
 
@@ -125,7 +125,7 @@ def test_scrap_does_not_write_fg_ledger(session):
     )
     batch = create_stitching_batch(
         session, production_order_id=order.id, sent_qty=Decimal(10),
-        vendor_id=None, in_house=True, created_by="t",
+        vendor_id=None, in_house=True, warehouse_id=wh.id, created_by="t",
     )
     apply_qc(session, batch=batch, qc_state=QCState.SCRAP, qty=Decimal(10), variant_id=variant.id, warehouse_id=wh.id, created_by="t")
     assert fg_balance(session, variant.id, wh.id) == Decimal(0)
@@ -145,7 +145,7 @@ def test_rework_feeds_back_without_creating_new_production_order(session):
     )
     batch = create_stitching_batch(
         session, production_order_id=order.id, sent_qty=Decimal(10),
-        vendor_id=None, in_house=True, created_by="t",
+        vendor_id=None, in_house=True, warehouse_id=wh.id, created_by="t",
     )
     apply_qc(session, batch=batch, qc_state=QCState.REWORK, qty=Decimal(2), variant_id=variant.id, warehouse_id=wh.id, created_by="t")
     apply_rework(session, batch=batch, qty=Decimal(2), outcome="passed", reason_code="loose_thread", created_by="t")
@@ -166,7 +166,7 @@ def test_production_event_log_is_complete(session):
     )
     batch = create_stitching_batch(
         session, production_order_id=order.id, sent_qty=Decimal(10),
-        vendor_id=None, in_house=True, created_by="t",
+        vendor_id=None, in_house=True, warehouse_id=wh.id, created_by="t",
     )
     receive_stitching(session, batch=batch, received_qty=Decimal(10), rejected_qty=Decimal(0), created_by="t")
     apply_qc(session, batch=batch, qc_state=QCState.PASS, qty=Decimal(10), variant_id=variant.id, warehouse_id=wh.id, created_by="t", fg_writer=write_production_complete)

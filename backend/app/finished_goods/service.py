@@ -4,32 +4,73 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.accessory_inventory.models import AccessoryItem, AccessoryLedgerEntry
 from app.core.ledger_base import Direction
 from app.core.ref_validator import validate_reference
 from app.fabric_inventory.models import FabricLedgerEntry, FabricLot
 from app.finished_goods.models import FinishedGoodsLedgerEntry
 
 
-def _fabric_cost_consumed(session: Session, production_order_id: int) -> Decimal:
-    """Sum of (qty issued * lot cost_per_uom) for every fabric ledger entry
-    referencing this production order. ponytail: accessory consumption isn't
-    wired into the production module yet (cutting only issues fabric in this
-    MVP) — add accessory cost into this rollup once production records
-    accessory issues at the stitching/packing step."""
-    entries = (
+def production_cost_breakdown(session: Session, production_order_id: int) -> dict:
+    """Fabric + accessory + labor cost actually consumed by a production
+    order so far. Accessory cost uses AccessoryItem.default_cost (no
+    per-lot costing for accessories, unlike fabric's per-lot cost_per_uom —
+    ponytail: add accessory lot costing if suppliers start quoting
+    materially different prices per batch). Labor cost is the sum of
+    StitchingBatch.labor_cost manually entered per batch."""
+    from app.production.models import StitchingBatch
+
+    fabric_entries = (
         session.query(FabricLedgerEntry)
-        .filter_by(
-            reference_type="production_order",
-            reference_id=production_order_id,
-            direction=Direction.OUT.value,
-        )
+        .filter_by(reference_type="production_order", reference_id=production_order_id, direction=Direction.OUT.value)
         .all()
     )
-    total = Decimal("0")
-    for entry in entries:
+    fabric_cost = Decimal("0")
+    for entry in fabric_entries:
         lot = session.get(FabricLot, entry.fabric_lot_id)
-        total += entry.quantity * lot.cost_per_uom
-    return total
+        fabric_cost += entry.quantity * lot.cost_per_uom
+
+    accessory_entries = (
+        session.query(AccessoryLedgerEntry)
+        .filter_by(reference_type="production_order", reference_id=production_order_id, direction=Direction.OUT.value)
+        .all()
+    )
+    accessory_cost = Decimal("0")
+    for entry in accessory_entries:
+        item = session.get(AccessoryItem, entry.accessory_item_id)
+        accessory_cost += entry.quantity * (item.default_cost or Decimal("0"))
+
+    labor_cost = (
+        session.query(StitchingBatch)
+        .filter_by(production_order_id=production_order_id)
+        .with_entities(StitchingBatch.labor_cost)
+        .all()
+    )
+    labor_cost = sum((row[0] or Decimal("0") for row in labor_cost), Decimal("0"))
+
+    return {
+        "fabric_cost": fabric_cost,
+        "accessory_cost": accessory_cost,
+        "labor_cost": labor_cost,
+        "total_cost": fabric_cost + accessory_cost + labor_cost,
+    }
+
+
+def average_unit_cost(session: Session, variant_id: int) -> Decimal:
+    """Weighted-average cost basis across every production_complete entry
+    for this variant. ponytail: simple weighted average, not FIFO/lot
+    costing — good enough for an at-a-glance margin figure, revisit if the
+    business needs per-batch cost precision."""
+    entries = (
+        session.query(FinishedGoodsLedgerEntry)
+        .filter_by(variant_id=variant_id, txn_type="production_complete", direction=Direction.IN.value)
+        .all()
+    )
+    total_qty = sum((e.quantity for e in entries), Decimal("0"))
+    if not total_qty:
+        return Decimal("0")
+    total_cost = sum((e.quantity * (e.unit_cost or Decimal("0")) for e in entries), Decimal("0"))
+    return total_cost / total_qty
 
 
 def write_production_complete(
@@ -45,7 +86,7 @@ def write_production_complete(
 ) -> FinishedGoodsLedgerEntry:
     """System-written only — called from production.apply_qc's PASS/SECOND_SALE
     path. No manual-entry API exposes txn_type=production_complete."""
-    total_cost = _fabric_cost_consumed(session, production_order_id)
+    total_cost = production_cost_breakdown(session, production_order_id)["total_cost"]
     unit_cost = (total_cost / qty) if qty else Decimal("0")
 
     entry = FinishedGoodsLedgerEntry(

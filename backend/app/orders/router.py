@@ -92,3 +92,27 @@ def cancel(order_id: int, db: Session = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return order
+
+
+@router.get("/sales-orders/{order_id}/margin")
+def margin(order_id: int, db: Session = Depends(get_db)):
+    from app.finished_goods.service import average_unit_cost
+
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    lines = db.query(SalesOrderLine).filter_by(sales_order_id=order_id).all()
+    line_margins = []
+    total_margin = Decimal("0")
+    for line in lines:
+        unit_cost = average_unit_cost(db, line.variant_id)
+        line_margin = (line.unit_price - unit_cost) * line.qty
+        total_margin += line_margin
+        line_margins.append({
+            "variant_id": line.variant_id,
+            "qty": line.qty,
+            "unit_price": line.unit_price,
+            "unit_cost": unit_cost,
+            "margin": line_margin,
+        })
+    return {"order_id": order_id, "lines": line_margins, "total_margin": total_margin}

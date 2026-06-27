@@ -54,6 +54,7 @@ class StitchingBatchIn(BaseModel):
     sent_qty: Decimal
     vendor_id: Optional[int] = None
     in_house: bool = False
+    labor_cost: Decimal = Decimal("0")
     created_by: str
 
 
@@ -152,11 +153,33 @@ def list_batches(order_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/production-orders/{order_id}/stitching-batches")
-def create_batch(order_id: int, payload: StitchingBatchIn, db: Session = Depends(get_db)):
+def create_batch(
+    order_id: int, payload: StitchingBatchIn, db: Session = Depends(get_db),
+    warehouse_id: int = Depends(get_default_warehouse_id),
+):
     if db.get(ProductionOrder, order_id) is None:
         raise HTTPException(404, "ProductionOrder not found")
-    batch = create_stitching_batch(db, production_order_id=order_id, **payload.model_dump())
+    batch = create_stitching_batch(db, production_order_id=order_id, warehouse_id=warehouse_id, **payload.model_dump())
     return {"id": batch.id, "sent_qty": batch.sent_qty}
+
+
+@router.get("/production-orders/{order_id}/cost-breakdown")
+def cost_breakdown(order_id: int, db: Session = Depends(get_db)):
+    from app.finished_goods.models import FinishedGoodsLedgerEntry
+    from app.finished_goods.service import production_cost_breakdown
+
+    if db.get(ProductionOrder, order_id) is None:
+        raise HTTPException(404, "ProductionOrder not found")
+    breakdown = production_cost_breakdown(db, order_id)
+    qty_passed = (
+        db.query(FinishedGoodsLedgerEntry)
+        .filter_by(reference_type="production_order", reference_id=order_id, txn_type="production_complete")
+        .with_entities(FinishedGoodsLedgerEntry.quantity)
+        .all()
+    )
+    total_qty_passed = sum((row[0] for row in qty_passed), Decimal("0"))
+    unit_cost = (breakdown["total_cost"] / total_qty_passed) if total_qty_passed else None
+    return {**breakdown, "qty_passed": total_qty_passed, "unit_cost": unit_cost}
 
 
 @router.post("/stitching-batches/{batch_id}/receive")
