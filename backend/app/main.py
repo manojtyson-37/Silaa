@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,9 +32,12 @@ from app.orders.router import router as orders_router
 
 app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0")
 
+_default_origins = "http://localhost:3000,http://localhost:3001"
+_origins = os.environ.get("FRONTEND_ORIGINS", _default_origins).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # ponytail: local dev only, add real origins at deploy time
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
