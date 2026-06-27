@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input } from "@/components/ui";
 
 export default function NewFabricItemForm() {
@@ -25,7 +26,7 @@ export default function NewFabricItemForm() {
         gsm: gsm ? Number(gsm) : null,
         width: width || null,
         consumption_uom: consumptionUom,
-      });
+      }, getClientToken());
       setName("");
       setComposition("");
       setGsm("");

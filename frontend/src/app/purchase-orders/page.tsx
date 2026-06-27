@@ -2,11 +2,13 @@ import { api, PurchaseOrder, Supplier } from "@/lib/api";
 import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
 import NewPOForm from "./NewPOForm";
 import ApproveButton from "./ApproveButton";
+import { requireAuth } from "@/lib/serverAuth";
 
 export default async function PurchaseOrdersPage() {
+  const token = await requireAuth();
   const [orders, suppliers] = await Promise.all([
-    api.get<PurchaseOrder[]>("/purchase-orders"),
-    api.get<Supplier[]>("/suppliers"),
+    api.get<PurchaseOrder[]>("/purchase-orders", token),
+    api.get<Supplier[]>("/suppliers", token),
   ]);
   const supplierName = (id: number) => suppliers.find((s) => s.id === id)?.name ?? `#${id}`;
 

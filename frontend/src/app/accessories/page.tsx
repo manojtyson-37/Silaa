@@ -2,16 +2,18 @@ import { api, AccessoryItem, Supplier } from "@/lib/api";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 import NewAccessoryItemForm from "./NewAccessoryItemForm";
 import GRNForm from "./GRNForm";
+import { requireAuth } from "@/lib/serverAuth";
 
 type Balance = { accessory_item_id: number; balance: string };
 
 export default async function AccessoriesPage() {
+  const token = await requireAuth();
   const [items, suppliers] = await Promise.all([
-    api.get<AccessoryItem[]>("/accessory-items"),
-    api.get<Supplier[]>("/suppliers"),
+    api.get<AccessoryItem[]>("/accessory-items", token),
+    api.get<Supplier[]>("/suppliers", token),
   ]);
   const balances = await Promise.all(
-    items.map((it) => api.get<Balance>(`/accessory-items/${it.id}/balance`))
+    items.map((it) => api.get<Balance>(`/accessory-items/${it.id}/balance`, token))
   );
 
   return (

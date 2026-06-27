@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input } from "@/components/ui";
 
 export default function NewStyleForm() {
@@ -15,7 +16,7 @@ export default function NewStyleForm() {
   const submit = async () => {
     setError(null);
     try {
-      await api.post("/styles", form);
+      await api.post("/styles", form, getClientToken());
       setForm({ name: "", category: "", collection: "" });
       setOpen(false);
       router.refresh();

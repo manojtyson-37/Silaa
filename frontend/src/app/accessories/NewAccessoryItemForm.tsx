@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input } from "@/components/ui";
 
 export default function NewAccessoryItemForm() {
@@ -23,7 +24,7 @@ export default function NewAccessoryItemForm() {
         type,
         consumption_uom: consumptionUom,
         default_cost: defaultCost || null,
-      });
+      }, getClientToken());
       setName("");
       setType("");
       setDefaultCost("");

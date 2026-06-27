@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 
 const firaSans = Fira_Sans({
   variable: "--font-fira-sans",
@@ -27,9 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${firaSans.variable} ${firaCode.variable} h-full antialiased`}>
-      <body className="min-h-full flex bg-background text-foreground">
-        <Sidebar />
-        <div className="flex-1 min-w-0">{children}</div>
+      <body className="min-h-full">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

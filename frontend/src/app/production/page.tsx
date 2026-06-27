@@ -2,9 +2,11 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { api, ProductionOrder } from "@/lib/api";
 import { Card, PageHeader, StatusPill } from "@/components/ui";
+import { requireAuth } from "@/lib/serverAuth";
 
 export default async function ProductionListPage() {
-  const orders = await api.get<ProductionOrder[]>("/production-orders");
+  const token = await requireAuth();
+  const orders = await api.get<ProductionOrder[]>("/production-orders", token);
 
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">

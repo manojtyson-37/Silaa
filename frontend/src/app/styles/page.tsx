@@ -1,11 +1,13 @@
 import { api, Style, StyleVariant } from "@/lib/api";
 import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
 import NewStyleForm from "./NewStyleForm";
+import { requireAuth } from "@/lib/serverAuth";
 
 export default async function StylesPage() {
-  const styles = await api.get<Style[]>("/styles");
+  const token = await requireAuth();
+  const styles = await api.get<Style[]>("/styles", token);
   const variantsByStyle = await Promise.all(
-    styles.map((s) => api.get<StyleVariant[]>(`/styles/${s.id}/variants`))
+    styles.map((s) => api.get<StyleVariant[]>(`/styles/${s.id}/variants`, token))
   );
 
   return (

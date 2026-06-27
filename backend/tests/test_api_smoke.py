@@ -22,7 +22,10 @@ def make_client(tmp_path):
     from app.main import app
 
     Base.metadata.create_all(db_module.engine)
-    return TestClient(app)
+    client = TestClient(app)
+    token = client.post("/auth/login", json={"username": "admin", "password": "test-password"}).json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
 
 
 def test_full_flow_via_http(tmp_path):

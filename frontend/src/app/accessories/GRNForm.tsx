@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, AccessoryItem, Supplier } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 export default function GRNForm({ accessoryItems, suppliers }: { accessoryItems: AccessoryItem[]; suppliers: Supplier[] }) {
@@ -25,7 +26,7 @@ export default function GRNForm({ accessoryItems, suppliers }: { accessoryItems:
         received_qty: receivedQty,
         purchase_uom: purchaseUom,
         created_by: "web",
-      });
+      }, getClientToken());
       setReceivedQty("");
       setOpen(false);
       router.refresh();

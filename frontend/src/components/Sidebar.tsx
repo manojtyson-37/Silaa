@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, Shirt, Package, ClipboardList, ShoppingCart } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Boxes, Factory, LayoutGrid, LogOut, Shirt, Package, ClipboardList, ShoppingCart } from "lucide-react";
+import { clearClientToken } from "@/lib/clientAuth";
 
 const NAV = [
   { href: "/", label: "Overview", icon: LayoutGrid },
@@ -16,6 +17,7 @@ const NAV = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <aside className="w-60 shrink-0 border-r border-border bg-surface min-h-screen px-3 py-5 flex flex-col gap-1">
@@ -40,6 +42,17 @@ export default function Sidebar() {
           </Link>
         );
       })}
+      <button
+        onClick={() => {
+          clearClientToken();
+          router.push("/login");
+          router.refresh();
+        }}
+        className="mt-auto flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:bg-muted hover:text-destructive cursor-pointer transition-colors duration-150"
+      >
+        <LogOut size={16} strokeWidth={2} />
+        Log out
+      </button>
     </aside>
   );
 }

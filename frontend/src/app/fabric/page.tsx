@@ -2,17 +2,19 @@ import { api, FabricItem, FabricLot, Supplier } from "@/lib/api";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 import NewFabricItemForm from "./NewFabricItemForm";
 import GRNForm from "./GRNForm";
+import { requireAuth } from "@/lib/serverAuth";
 
 type Balance = { fabric_lot_id: number; balance: string };
 
 export default async function FabricPage() {
+  const token = await requireAuth();
   const [lots, fabricItems, suppliers] = await Promise.all([
-    api.get<FabricLot[]>("/fabric-lots"),
-    api.get<FabricItem[]>("/fabric-items"),
-    api.get<Supplier[]>("/suppliers"),
+    api.get<FabricLot[]>("/fabric-lots", token),
+    api.get<FabricItem[]>("/fabric-items", token),
+    api.get<Supplier[]>("/suppliers", token),
   ]);
   const balances = await Promise.all(
-    lots.map((l) => api.get<Balance>(`/fabric-lots/${l.id}/balance`))
+    lots.map((l) => api.get<Balance>(`/fabric-lots/${l.id}/balance`, token))
   );
 
   return (

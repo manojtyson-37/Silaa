@@ -1,10 +1,14 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     cache: "no-store", // this app's data changes on every action; never serve a stale fetch
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
   if (!res.ok) {
     const body = await res.text();
@@ -14,11 +18,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
-  patch: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+  get: <T>(path: string, token?: string) => request<T>(path, undefined, token),
+  post: <T>(path: string, body?: unknown, token?: string) =>
+    request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }, token),
+  patch: <T>(path: string, body?: unknown, token?: string) =>
+    request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }, token),
 };
 
 export type FabricItem = {

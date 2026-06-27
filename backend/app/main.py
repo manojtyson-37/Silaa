@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.auth.deps import get_current_user
+from app.auth.router import router as auth_router
 
 # Import every model module so Base.metadata is fully populated before any
 # create_all() / Alembic autogenerate runs.
@@ -36,15 +39,18 @@ app.add_middleware(
 
 wiring.configure()
 
-app.include_router(procurement_router)
-app.include_router(uom_router)
-app.include_router(fabric_router)
-app.include_router(accessory_router)
-app.include_router(style_router)
-app.include_router(bom_router)
-app.include_router(production_router)
-app.include_router(finished_goods_router)
-app.include_router(orders_router)
+app.include_router(auth_router)
+
+_protected = [Depends(get_current_user)]
+app.include_router(procurement_router, dependencies=_protected)
+app.include_router(uom_router, dependencies=_protected)
+app.include_router(fabric_router, dependencies=_protected)
+app.include_router(accessory_router, dependencies=_protected)
+app.include_router(style_router, dependencies=_protected)
+app.include_router(bom_router, dependencies=_protected)
+app.include_router(production_router, dependencies=_protected)
+app.include_router(finished_goods_router, dependencies=_protected)
+app.include_router(orders_router, dependencies=_protected)
 
 
 @app.get("/health")

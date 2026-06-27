@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { api, ProductionEvent, ProductionOrder } from "@/lib/api";
 import { PageHeader, StatusPill } from "@/components/ui";
+import { requireAuth } from "@/lib/serverAuth";
 import ProductionOrderDetail, {
   CuttingRecord,
   StitchingBatch,
@@ -14,13 +15,14 @@ export default async function ProductionOrderPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const token = await requireAuth();
 
   const [order, variants, cuttingRecords, batches, events] = await Promise.all([
-    api.get<ProductionOrder>(`/production-orders/${id}`),
-    api.get<VariantBreakdown[]>(`/production-orders/${id}/variants`),
-    api.get<CuttingRecord[]>(`/production-orders/${id}/cutting-records`),
-    api.get<StitchingBatch[]>(`/production-orders/${id}/stitching-batches`),
-    api.get<ProductionEvent[]>(`/production-orders/${id}/events`),
+    api.get<ProductionOrder>(`/production-orders/${id}`, token),
+    api.get<VariantBreakdown[]>(`/production-orders/${id}/variants`, token),
+    api.get<CuttingRecord[]>(`/production-orders/${id}/cutting-records`, token),
+    api.get<StitchingBatch[]>(`/production-orders/${id}/stitching-batches`, token),
+    api.get<ProductionEvent[]>(`/production-orders/${id}/events`, token),
   ]);
 
   return (

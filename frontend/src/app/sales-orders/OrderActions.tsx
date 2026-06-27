@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 
 export default function OrderActions({ orderId }: { orderId: number }) {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function OrderActions({ orderId }: { orderId: number }) {
   const fulfill = async () => {
     setError(null);
     try {
-      await api.post(`/sales-orders/${orderId}/fulfill?created_by=web`);
+      await api.post(`/sales-orders/${orderId}/fulfill?created_by=web`, undefined, getClientToken());
       router.refresh();
     } catch (e) {
       setError(String(e));
@@ -21,7 +22,7 @@ export default function OrderActions({ orderId }: { orderId: number }) {
   const cancel = async () => {
     setError(null);
     try {
-      await api.post(`/sales-orders/${orderId}/cancel`);
+      await api.post(`/sales-orders/${orderId}/cancel`, undefined, getClientToken());
       router.refresh();
     } catch (e) {
       setError(String(e));

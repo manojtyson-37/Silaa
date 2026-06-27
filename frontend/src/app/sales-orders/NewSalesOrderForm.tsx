@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input } from "@/components/ui";
 
 type Line = { variant_id: string; qty: string; unit_price: string };
@@ -31,7 +32,7 @@ export default function NewSalesOrderForm() {
           unit_price: l.unit_price,
         })),
         created_by: "web",
-      });
+      }, getClientToken());
       setCustomerName("");
       setLines([emptyLine()]);
       setOpen(false);

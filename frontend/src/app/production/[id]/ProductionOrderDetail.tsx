@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { api, ProductionEvent, ProductionOrder } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select, StatusPill, Table, Td, Th } from "@/components/ui";
 
 export type VariantBreakdown = { variant_id: number; planned_qty: string };
@@ -49,7 +50,7 @@ export default function ProductionOrderDetail({
   const [events, setEvents] = useState(initialEvents);
 
   const refreshEvents = async () => {
-    setEvents(await api.get<ProductionEvent[]>(`/production-orders/${order.id}/events`));
+    setEvents(await api.get<ProductionEvent[]>(`/production-orders/${order.id}/events`, getClientToken()));
   };
 
   return (
@@ -152,7 +153,8 @@ function CuttingSection({
     try {
       const result = await api.post<{ id: number; actual_fabric_qty: string }>(
         `/production-orders/${orderId}/cutting-records`,
-        { ...form, fabric_lot_id: Number(form.fabric_lot_id), created_by: "ui" }
+        { ...form, fabric_lot_id: Number(form.fabric_lot_id), created_by: "ui" },
+        getClientToken()
       );
       onAdded({ id: result.id, ...form, fabric_lot_id: Number(form.fabric_lot_id) });
       setOpen(false);
@@ -246,7 +248,8 @@ function StitchingSection({
   const submitNewBatch = async () => {
     const result = await api.post<{ id: number; sent_qty: string }>(
       `/production-orders/${orderId}/stitching-batches`,
-      { sent_qty: form.sent_qty, in_house: form.in_house, created_by: "ui" }
+      { sent_qty: form.sent_qty, in_house: form.in_house, created_by: "ui" },
+      getClientToken()
     );
     onBatchAdded({
       id: result.id,
@@ -312,7 +315,7 @@ function BatchRow({
   const [qcForm, setQcForm] = useState({ qc_state: "PASS", qty: "", variant_id: "" });
 
   const submitReceive = async () => {
-    await api.post(`/stitching-batches/${batch.id}/receive`, { ...receiveForm, created_by: "ui" });
+    await api.post(`/stitching-batches/${batch.id}/receive`, { ...receiveForm, created_by: "ui" }, getClientToken());
     onUpdated({ ...batch, received_qty: receiveForm.received_qty, rejected_qty: receiveForm.rejected_qty });
     setPanel("none");
   };
@@ -323,7 +326,7 @@ function BatchRow({
       qty: qcForm.qty,
       variant_id: Number(qcForm.variant_id),
       created_by: "ui",
-    });
+    }, getClientToken());
     onUpdated({ ...batch, qc_state: qcForm.qc_state });
     setPanel("none");
   };

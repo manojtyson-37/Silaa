@@ -2,9 +2,11 @@ import { api, SalesOrder } from "@/lib/api";
 import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
 import NewSalesOrderForm from "./NewSalesOrderForm";
 import OrderActions from "./OrderActions";
+import { requireAuth } from "@/lib/serverAuth";
 
 export default async function SalesOrdersPage() {
-  const orders = await api.get<SalesOrder[]>("/sales-orders");
+  const token = await requireAuth();
+  const orders = await api.get<SalesOrder[]>("/sales-orders", token);
 
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">

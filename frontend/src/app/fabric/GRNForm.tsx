@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, FabricItem, Supplier } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 export default function GRNForm({ fabricItems, suppliers }: { fabricItems: FabricItem[]; suppliers: Supplier[] }) {
@@ -30,7 +31,7 @@ export default function GRNForm({ fabricItems, suppliers }: { fabricItems: Fabri
         cost_per_uom: costPerUom,
         dye_lot_no: dyeLotNo || null,
         created_by: "web",
-      });
+      }, getClientToken());
       setReceivedQty("");
       setCostPerUom("");
       setDyeLotNo("");

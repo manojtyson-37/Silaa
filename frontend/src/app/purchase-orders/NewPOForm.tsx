@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, Supplier } from "@/lib/api";
+import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 type Line = {
@@ -44,7 +45,7 @@ export default function NewPOForm({ suppliers }: { suppliers: Supplier[] }) {
           ordered_uom: l.ordered_uom,
           agreed_price: l.agreed_price,
         })),
-      });
+      }, getClientToken());
       setLines([emptyLine()]);
       setOpen(false);
       router.refresh();

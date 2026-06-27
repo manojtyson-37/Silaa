@@ -1,3 +1,9 @@
+import os
+
+os.environ.setdefault("AUTH_SECRET_KEY", "test-secret")
+os.environ.setdefault("ADMIN_USERNAME", "admin")
+os.environ.setdefault("ADMIN_PASSWORD", "test-password")
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
