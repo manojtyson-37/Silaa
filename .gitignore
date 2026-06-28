@@ -5,3 +5,6 @@ __pycache__/
 .env
 backend/openapi.generated.json
 backups/
+
+# graphify build artifacts (local, can be large)
+graphify-out/
