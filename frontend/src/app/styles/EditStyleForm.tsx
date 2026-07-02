@@ -13,7 +13,7 @@ type Props = {
 
 export default function EditStyleForm({ style, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: style.name, category: style.category, collection: style.collection });
+  const [form, setForm] = useState({ name: style.name, category: style.category ?? "", collection: style.collection ?? "" });
   const [imageUrl, setImageUrl] = useState<string | null>(style.image_url || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,7 +108,7 @@ export default function EditStyleForm({ style, onSaved }: Props) {
         </Button>
         <Button
           onClick={() => setEditing(false)}
-          variant="secondary"
+          variant="ghost"
           className="text-xs flex-1"
         >
           Cancel

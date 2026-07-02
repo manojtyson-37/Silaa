@@ -70,7 +70,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
         </Button>
         <Button
           onClick={() => setEditing(false)}
-          variant="secondary"
+          variant="ghost"
           className="text-xs flex-1"
         >
           Cancel
