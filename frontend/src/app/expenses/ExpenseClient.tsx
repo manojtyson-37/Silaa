@@ -37,8 +37,10 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
   };
 
   const deleteCategory = async (id: number) => {
-    await api.delete(`/expense-categories/${id}`, getClientToken());
-    setCategories((c) => c.filter((x) => x.id !== id));
+    try {
+      await api.delete(`/expense-categories/${id}`, getClientToken());
+      setCategories((c) => c.filter((x) => x.id !== id));
+    } catch (e) { setError(String(e)); }
   };
 
   const addExpense = async () => {
@@ -60,8 +62,10 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
   };
 
   const deleteExpense = async (id: number) => {
-    await api.delete(`/expenses/${id}`, getClientToken());
-    setExpenses((e) => e.filter((x) => x.id !== id));
+    try {
+      await api.delete(`/expenses/${id}`, getClientToken());
+      setExpenses((e) => e.filter((x) => x.id !== id));
+    } catch (e) { setError(String(e)); }
   };
 
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));

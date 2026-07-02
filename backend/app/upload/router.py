@@ -22,6 +22,8 @@ async def upload_image(file: UploadFile):
 
     key = f"{uuid.uuid4()}.{ext}"
     content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(413, "File too large — 10 MB max")
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(

@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -45,6 +45,8 @@ def delete_category(id: int, db: Session = Depends(get_db)):
     cat = db.get(ExpenseCategory, id)
     if not cat:
         raise HTTPException(404, "Category not found")
+    if db.scalar(select(func.count()).select_from(Expense).where(Expense.category_id == id)):
+        raise HTTPException(409, "Category has expenses — delete them first")
     db.delete(cat)
     db.commit()
 
