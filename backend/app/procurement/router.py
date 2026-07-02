@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -37,6 +38,10 @@ class PurchaseOrderOut(BaseModel):
     id: int
     supplier_id: int
     status: str
+
+
+class PurchaseOrderUpdate(BaseModel):
+    supplier_id: Optional[int] = None
 
 
 @router.post("/suppliers", response_model=SupplierOut)
@@ -90,6 +95,19 @@ def get_purchase_order(po_id: int, db: Session = Depends(get_db)):
             for l in lines
         ],
     }
+
+
+@router.patch("/purchase-orders/{po_id}", response_model=PurchaseOrderOut)
+def update_purchase_order(po_id: int, payload: PurchaseOrderUpdate, db: Session = Depends(get_db)):
+    po = db.get(PurchaseOrder, po_id)
+    if po is None:
+        raise HTTPException(404, "PurchaseOrder not found")
+    if po.status != POStatus.DRAFT.value:
+        raise HTTPException(400, "Can only update PO in DRAFT status")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(po, k, v)
+    db.commit()
+    return po
 
 
 @router.patch("/purchase-orders/{po_id}/approve", response_model=PurchaseOrderOut)

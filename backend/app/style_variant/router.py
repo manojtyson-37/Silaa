@@ -23,6 +23,13 @@ class StyleOut(StyleIn):
     id: int
 
 
+class StyleUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    collection: Optional[str] = None
+    image_url: Optional[str] = None
+
+
 class VariantIn(BaseModel):
     color: str
     size: str
@@ -67,3 +74,14 @@ def create_variant(style_id: int, payload: VariantIn, db: Session = Depends(get_
 @router.get("/styles/{style_id}/variants", response_model=list[VariantOut])
 def list_variants(style_id: int, db: Session = Depends(get_db)):
     return db.query(StyleVariant).filter_by(style_id=style_id).all()
+
+
+@router.patch("/styles/{style_id}", response_model=StyleOut)
+def update_style(style_id: int, payload: StyleUpdate, db: Session = Depends(get_db)):
+    style = db.get(Style, style_id)
+    if style is None:
+        raise HTTPException(404, "Style not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(style, k, v)
+    db.commit()
+    return style

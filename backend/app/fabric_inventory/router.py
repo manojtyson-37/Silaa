@@ -27,6 +27,15 @@ class FabricItemOut(FabricItemIn):
     id: int
 
 
+class FabricItemUpdate(BaseModel):
+    name: Optional[str] = None
+    composition: Optional[str] = None
+    gsm: Optional[int] = None
+    width: Optional[Decimal] = None
+    consumption_uom: Optional[str] = None
+    image_url: Optional[str] = None
+
+
 class GRNIn(BaseModel):
     fabric_item_id: int
     supplier_id: int
@@ -76,6 +85,17 @@ def create_fabric_item(payload: FabricItemIn, db: Session = Depends(get_db)):
 @router.get("/fabric-items", response_model=list[FabricItemOut])
 def list_fabric_items(db: Session = Depends(get_db)):
     return db.query(FabricItem).all()
+
+
+@router.patch("/fabric-items/{item_id}", response_model=FabricItemOut)
+def update_fabric_item(item_id: int, payload: FabricItemUpdate, db: Session = Depends(get_db)):
+    item = db.get(FabricItem, item_id)
+    if item is None:
+        raise HTTPException(404, "FabricItem not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(item, k, v)
+    db.commit()
+    return item
 
 
 @router.get("/fabric-lots", response_model=list[LotOut])

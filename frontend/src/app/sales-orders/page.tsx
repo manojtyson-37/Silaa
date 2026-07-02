@@ -1,7 +1,7 @@
 import { api, OrderMargin, SalesOrder } from "@/lib/api";
-import { Card, PageHeader, StatusPill, Table, Td, Th } from "@/components/ui";
+import { Card, PageHeader } from "@/components/ui";
 import NewSalesOrderForm from "./NewSalesOrderForm";
-import OrderActions from "./OrderActions";
+import SOClient from "./SOClient";
 import { requireAuth } from "@/lib/serverAuth";
 
 export default async function SalesOrdersPage() {
@@ -20,30 +20,7 @@ export default async function SalesOrdersPage() {
       {orders.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground text-sm">No sales orders yet.</Card>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>Order</Th>
-              <Th>Customer</Th>
-              <Th>Status</Th>
-              <Th>Margin</Th>
-              <Th>Action</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, i) => (
-              <tr key={order.id}>
-                <Td className="font-mono text-xs">#{order.id}</Td>
-                <Td>{order.customer_name}</Td>
-                <Td>
-                  <StatusPill value={order.status} />
-                </Td>
-                <Td className="font-medium">₹{margins[i].total_margin}</Td>
-                <Td>{order.status === "draft" && <OrderActions orderId={order.id} />}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <SOClient orders={orders} margins={margins} />
       )}
     </main>
   );
