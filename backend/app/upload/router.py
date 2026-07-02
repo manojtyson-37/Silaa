@@ -30,6 +30,9 @@ async def upload_image(file: UploadFile):
             f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{key}",
             content=content,
             headers={
+                # apikey is required for Supabase's sb_secret_* keys; without it the
+                # storage API tries to parse the Bearer token as a JWT ("Invalid Compact JWS")
+                "apikey": SUPABASE_SERVICE_KEY,
                 "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                 "Content-Type": file.content_type or "application/octet-stream",
             },
