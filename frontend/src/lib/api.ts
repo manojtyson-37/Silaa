@@ -154,7 +154,7 @@ export type WastageRejectionReport = {
   scrapped_by_style: { style_id: number; scrapped_qty: string }[];
 };
 
-export type ExpenseCategory = { id: number; name: string; color: string | null };
+export type ExpenseCategory = { id: number; name: string; color: string | null; icon: string | null };
 export type Expense = {
   id: number;
   category_id: number;

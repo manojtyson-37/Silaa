@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { api, Expense, ExpenseCategory } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
+import CategoryEditor, { CategoryDraft } from "./CategoryEditor";
+import { CategoryIcon, DEFAULT_ICON } from "./categoryMeta";
 
 type Props = {
   categories: ExpenseCategory[];
@@ -14,8 +16,8 @@ type Props = {
 export default function ExpenseClient({ categories: initCats, expenses: initExp }: Props) {
   const [categories, setCategories] = useState(initCats);
   const [expenses, setExpenses] = useState(initExp);
-  const [catForm, setCatForm] = useState({ name: "", color: "#6366f1" });
   const [catOpen, setCatOpen] = useState(false);
+  const [editingCatId, setEditingCatId] = useState<number | null>(null);
   const [expForm, setExpForm] = useState({
     category_id: "",
     amount: "",
@@ -27,16 +29,26 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
   const [expOpen, setExpOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addCategory = async () => {
+  const addCategory = async (draft: CategoryDraft) => {
+    setError(null);
     try {
-      const cat = await api.post<ExpenseCategory>("/expense-categories", catForm, getClientToken());
+      const cat = await api.post<ExpenseCategory>("/expense-categories", draft, getClientToken());
       setCategories((c) => [...c, cat]);
-      setCatForm({ name: "", color: "#6366f1" });
       setCatOpen(false);
     } catch (e) { setError(String(e)); }
   };
 
+  const updateCategory = async (id: number, draft: CategoryDraft) => {
+    setError(null);
+    try {
+      const cat = await api.patch<ExpenseCategory>(`/expense-categories/${id}`, draft, getClientToken());
+      setCategories((c) => c.map((x) => (x.id === id ? cat : x)));
+      setEditingCatId(null);
+    } catch (e) { setError(String(e)); }
+  };
+
   const deleteCategory = async (id: number) => {
+    setError(null);
     try {
       await api.delete(`/expense-categories/${id}`, getClientToken());
       setCategories((c) => c.filter((x) => x.id !== id));
@@ -62,6 +74,7 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
   };
 
   const deleteExpense = async (id: number) => {
+    setError(null);
     try {
       await api.delete(`/expenses/${id}`, getClientToken());
       setExpenses((e) => e.filter((x) => x.id !== id));
@@ -78,43 +91,60 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-medium text-foreground text-sm">Categories</h2>
           <button
-            onClick={() => setCatOpen(!catOpen)}
+            onClick={() => { setCatOpen((o) => !o); setEditingCatId(null); }}
             className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary cursor-pointer"
           >
             <Plus size={12} /> Add
           </button>
         </div>
+
         {catOpen && (
-          <Card className="p-3 mb-3 flex gap-2 items-end bg-muted/30 max-w-sm">
-            <Input
-              placeholder="Category name"
-              value={catForm.name}
-              onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
+          <div className="mb-3">
+            <CategoryEditor
+              initial={{ name: "", icon: DEFAULT_ICON, color: null }}
+              onSave={addCategory}
+              onCancel={() => setCatOpen(false)}
+              saveLabel="Add category"
             />
-            <input
-              type="color"
-              value={catForm.color}
-              onChange={(e) => setCatForm({ ...catForm, color: e.target.value })}
-              className="w-9 h-9 rounded border border-border cursor-pointer shrink-0"
-              title="Pick color"
-            />
-            <Button onClick={addCategory} disabled={!catForm.name}>Save</Button>
-          </Card>
+          </div>
         )}
+
         <div className="flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <span
-              key={c.id}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: c.color ?? "#6366f1" }}
-            >
-              {c.name}
-              <button onClick={() => deleteCategory(c.id)} className="opacity-70 hover:opacity-100 cursor-pointer">
-                <Trash2 size={10} />
-              </button>
-            </span>
-          ))}
-          {categories.length === 0 && <p className="text-sm text-muted-foreground">No categories yet.</p>}
+          {categories.map((c) =>
+            editingCatId === c.id ? (
+              <CategoryEditor
+                key={c.id}
+                initial={{ name: c.name, icon: c.icon, color: c.color }}
+                onSave={(draft) => updateCategory(c.id, draft)}
+                onCancel={() => setEditingCatId(null)}
+              />
+            ) : (
+              <span
+                key={c.id}
+                className="group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border"
+              >
+                <CategoryIcon icon={c.icon} color={c.color} size={13} />
+                {c.name}
+                <button
+                  onClick={() => { setEditingCatId(c.id); setCatOpen(false); }}
+                  className="opacity-0 group-hover:opacity-70 hover:!opacity-100 cursor-pointer transition-opacity"
+                  title="Edit"
+                >
+                  <Pencil size={11} />
+                </button>
+                <button
+                  onClick={() => deleteCategory(c.id)}
+                  className="opacity-0 group-hover:opacity-70 hover:!opacity-100 cursor-pointer transition-opacity"
+                  title="Delete"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </span>
+            )
+          )}
+          {categories.length === 0 && !catOpen && (
+            <p className="text-sm text-muted-foreground">No categories yet.</p>
+          )}
         </div>
       </section>
 
@@ -190,10 +220,7 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
               return (
                 <Card key={exp.id} className="p-4 flex items-start gap-3">
                   <div className="shrink-0 mt-0.5">
-                    <span
-                      className="inline-block w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: cat?.color ?? "#6366f1" }}
-                    />
+                    <CategoryIcon icon={cat?.icon ?? null} color={cat?.color ?? null} size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">

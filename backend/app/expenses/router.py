@@ -18,12 +18,20 @@ router = APIRouter(tags=["expenses"])
 class CategoryIn(BaseModel):
     name: str
     color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
 
 
 class CategoryOut(BaseModel):
     id: int
     name: str
     color: Optional[str]
+    icon: Optional[str]
 
 
 @router.get("/expense-categories", response_model=list[CategoryOut])
@@ -33,8 +41,23 @@ def list_categories(db: Session = Depends(get_db)):
 
 @router.post("/expense-categories", response_model=CategoryOut, status_code=201)
 def create_category(payload: CategoryIn, db: Session = Depends(get_db)):
-    cat = ExpenseCategory(name=payload.name, color=payload.color)
+    cat = ExpenseCategory(name=payload.name, color=payload.color, icon=payload.icon)
     db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+
+@router.patch("/expense-categories/{id}", response_model=CategoryOut)
+def update_category(id: int, payload: CategoryUpdate, db: Session = Depends(get_db)):
+    cat = db.get(ExpenseCategory, id)
+    if not cat:
+        raise HTTPException(404, "Category not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and not data["name"]:
+        raise HTTPException(422, "Name cannot be empty")
+    for field, value in data.items():
+        setattr(cat, field, value)
     db.commit()
     db.refresh(cat)
     return cat

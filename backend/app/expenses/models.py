@@ -12,7 +12,8 @@ class ExpenseCategory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    color: Mapped[str] = mapped_column(String, nullable=True)  # hex color for UI badge
+    color: Mapped[str] = mapped_column(String, nullable=True)  # hex accent color for UI badge
+    icon: Mapped[str] = mapped_column(String, nullable=True)  # lucide icon name for UI badge
 
 
 class Expense(Base):
