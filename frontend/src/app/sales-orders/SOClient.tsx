@@ -13,6 +13,7 @@ type Props = {
 
 export default function SOClient({ orders, margins }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const marginByOrderId = Object.fromEntries(margins.map((m) => [m.order_id, m]));
 
   return (
     <Table>
@@ -26,7 +27,7 @@ export default function SOClient({ orders, margins }: Props) {
         </tr>
       </thead>
       <tbody>
-        {orders.map((order, i) => (
+        {orders.map((order) => (
           <tr key={`${order.id}-${refreshKey}`}>
             <Td className="font-mono text-xs">#{order.id}</Td>
             <Td className="flex items-center gap-2">
@@ -38,7 +39,7 @@ export default function SOClient({ orders, margins }: Props) {
             <Td>
               <StatusPill value={order.status} />
             </Td>
-            <Td className="font-medium">₹{margins[i].total_margin}</Td>
+            <Td className="font-medium">₹{marginByOrderId[order.id]?.total_margin ?? "—"}</Td>
             <Td>{order.status === "draft" && <OrderActions orderId={order.id} />}</Td>
           </tr>
         ))}

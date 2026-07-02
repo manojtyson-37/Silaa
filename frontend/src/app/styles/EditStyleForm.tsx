@@ -42,7 +42,7 @@ export default function EditStyleForm({ style, onSaved }: Props) {
       setEditing(false);
       onSaved();
     } catch (e) {
-      setError(String(e));
+      setError("Failed to update. Please try again.");
     } finally {
       setSaving(false);
     }

@@ -43,15 +43,15 @@ export default function EditFabricItemForm({ item, onSaved }: Props) {
     setError(null);
     setSaving(true);
     try {
-      const payload: any = { name: form.name, image_url: imageUrl };
+      const payload: Record<string, unknown> = { name: form.name, image_url: imageUrl };
       if (form.composition) payload.composition = form.composition;
       if (form.gsm) payload.gsm = parseInt(form.gsm, 10);
-      if (form.width) payload.width = form.width;
+      if (form.width) payload.width = parseFloat(form.width);
       await api.patch(`/fabric-items/${item.id}`, payload, getClientToken());
       setEditing(false);
       onSaved();
     } catch (e) {
-      setError(String(e));
+      setError("Failed to update. Please try again.");
     } finally {
       setSaving(false);
     }
