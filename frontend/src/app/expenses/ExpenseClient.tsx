@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, X } from "lucide-react";
 import { api, Expense, ExpenseCategory } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
@@ -27,6 +27,10 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
     tags: "",
   });
   const [expOpen, setExpOpen] = useState(false);
+  const [editingExpId, setEditingExpId] = useState<number | null>(null);
+  const [editExpForm, setEditExpForm] = useState<{
+    category_id: string; amount: string; expense_date: string; description: string; paid_to: string; tags: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const addCategory = async (draft: CategoryDraft) => {
@@ -79,6 +83,37 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
       await api.delete(`/expenses/${id}`, getClientToken());
       setExpenses((e) => e.filter((x) => x.id !== id));
     } catch (e) { setError(String(e)); }
+  };
+
+  const startEditExpense = (exp: Expense) => {
+    setEditingExpId(exp.id);
+    setEditExpForm({
+      category_id: String(exp.category_id),
+      amount: String(exp.amount),
+      expense_date: exp.expense_date,
+      description: exp.description,
+      paid_to: exp.paid_to ?? "",
+      tags: (exp.tags ?? []).join(", "),
+    });
+  };
+
+  const saveEditExpense = async (id: number) => {
+    if (!editExpForm) return;
+    setError(null);
+    try {
+      const payload = {
+        category_id: Number(editExpForm.category_id),
+        amount: parseFloat(editExpForm.amount),
+        expense_date: editExpForm.expense_date,
+        description: editExpForm.description,
+        paid_to: editExpForm.paid_to || null,
+        tags: editExpForm.tags ? editExpForm.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      };
+      const updated = await api.patch<Expense>(`/expenses/${id}`, payload, getClientToken());
+      setExpenses((e) => e.map((x) => (x.id === id ? updated : x)));
+      setEditingExpId(null);
+      setEditExpForm(null);
+    } catch (e) { setError("Failed to update. Please try again."); }
   };
 
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
@@ -217,8 +252,34 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
           <div className="flex flex-col gap-2">
             {expenses.map((exp) => {
               const cat = catById[exp.category_id];
+              if (editingExpId === exp.id && editExpForm) {
+                return (
+                  <Card key={exp.id} className="p-4 bg-muted/30 flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="text-xs font-medium text-muted-foreground">Edit expense</p>
+                      <button onClick={() => { setEditingExpId(null); setEditExpForm(null); }} className="text-muted-foreground hover:text-foreground">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <Select value={editExpForm.category_id} onChange={(e) => setEditExpForm({ ...editExpForm, category_id: e.target.value })}>
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </Select>
+                    <div className="flex gap-2">
+                      <Input placeholder="Amount (₹)" value={editExpForm.amount} onChange={(e) => setEditExpForm({ ...editExpForm, amount: e.target.value })} />
+                      <Input type="date" value={editExpForm.expense_date} onChange={(e) => setEditExpForm({ ...editExpForm, expense_date: e.target.value })} />
+                    </div>
+                    <Input placeholder="Description" value={editExpForm.description} onChange={(e) => setEditExpForm({ ...editExpForm, description: e.target.value })} />
+                    <Input placeholder="Paid to (optional)" value={editExpForm.paid_to} onChange={(e) => setEditExpForm({ ...editExpForm, paid_to: e.target.value })} />
+                    <Input placeholder="Tags (comma-separated)" value={editExpForm.tags} onChange={(e) => setEditExpForm({ ...editExpForm, tags: e.target.value })} />
+                    <div className="flex gap-2 pt-1">
+                      <Button onClick={() => saveEditExpense(exp.id)} disabled={!editExpForm.category_id || !editExpForm.amount || !editExpForm.description}>Save</Button>
+                      <Button variant="ghost" onClick={() => { setEditingExpId(null); setEditExpForm(null); }}>Cancel</Button>
+                    </div>
+                  </Card>
+                );
+              }
               return (
-                <Card key={exp.id} className="p-4 flex items-start gap-3">
+                <Card key={exp.id} className="p-4 flex items-start gap-3 group">
                   <div className="shrink-0 mt-0.5">
                     <CategoryIcon icon={cat?.icon ?? null} color={cat?.color ?? null} size={16} />
                   </div>
@@ -238,12 +299,20 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteExpense(exp.id)}
-                    className="shrink-0 text-muted-foreground hover:text-destructive cursor-pointer mt-0.5"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="shrink-0 flex items-center gap-1 mt-0.5">
+                    <button
+                      onClick={() => startEditExpense(exp)}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteExpense(exp.id)}
+                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </Card>
               );
             })}

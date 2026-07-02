@@ -94,6 +94,15 @@ class ExpenseIn(BaseModel):
     tags: list[str] = []
 
 
+class ExpenseUpdate(BaseModel):
+    category_id: Optional[int] = None
+    amount: Optional[Decimal] = None
+    expense_date: Optional[date] = None
+    description: Optional[str] = None
+    paid_to: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
 class ExpenseOut(BaseModel):
     id: int
     category_id: int
@@ -125,6 +134,20 @@ def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
         raise HTTPException(404, "Category not found")
     exp = Expense(**payload.model_dump())
     db.add(exp)
+    db.commit()
+    db.refresh(exp)
+    return exp
+
+
+@router.patch("/expenses/{id}", response_model=ExpenseOut)
+def update_expense(id: int, payload: ExpenseUpdate, db: Session = Depends(get_db)):
+    exp = db.get(Expense, id)
+    if not exp:
+        raise HTTPException(404, "Expense not found")
+    if payload.category_id is not None and not db.get(ExpenseCategory, payload.category_id):
+        raise HTTPException(404, "Category not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(exp, k, v)
     db.commit()
     db.refresh(exp)
     return exp
