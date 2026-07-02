@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -43,7 +44,11 @@ def list_categories(db: Session = Depends(get_db)):
 def create_category(payload: CategoryIn, db: Session = Depends(get_db)):
     cat = ExpenseCategory(name=payload.name, color=payload.color, icon=payload.icon)
     db.add(cat)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Category name already exists")
     db.refresh(cat)
     return cat
 
@@ -54,11 +59,15 @@ def update_category(id: int, payload: CategoryUpdate, db: Session = Depends(get_
     if not cat:
         raise HTTPException(404, "Category not found")
     data = payload.model_dump(exclude_unset=True)
-    if "name" in data and not data["name"]:
+    if "name" in data and not (data["name"] or "").strip():
         raise HTTPException(422, "Name cannot be empty")
     for field, value in data.items():
         setattr(cat, field, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Category name already exists")
     db.refresh(cat)
     return cat
 
