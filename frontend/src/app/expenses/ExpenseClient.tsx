@@ -279,7 +279,7 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
                 );
               }
               return (
-                <Card key={exp.id} className="p-4 flex items-start gap-3 group">
+                <Card key={exp.id} className="p-4 flex items-start gap-3">
                   <div className="shrink-0 mt-0.5">
                     <CategoryIcon icon={cat?.icon ?? null} color={cat?.color ?? null} size={16} />
                   </div>
@@ -302,7 +302,7 @@ export default function ExpenseClient({ categories: initCats, expenses: initExp 
                   <div className="shrink-0 flex items-center gap-1 mt-0.5">
                     <button
                       onClick={() => startEditExpense(exp)}
-                      className="text-muted-foreground hover:text-foreground cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       <Pencil size={14} />
                     </button>
