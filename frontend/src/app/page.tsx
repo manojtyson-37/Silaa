@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, Factory, Package, Shirt } from "lucide-react";
+import { Boxes, Factory, Shirt, Receipt } from "lucide-react";
 import { api, DashboardSummary } from "@/lib/api";
 import { Card, PageHeader } from "@/components/ui";
 import { requireAuth } from "@/lib/serverAuth";
@@ -7,8 +7,8 @@ import { requireAuth } from "@/lib/serverAuth";
 const CARDS = [
   { href: "/styles", title: "Styles & Variants", desc: "Manage styles, SKUs, and BOM versions", icon: Shirt },
   { href: "/fabric", title: "Fabric Inventory", desc: "Lots, balances, dye-lot tracking", icon: Boxes },
-  { href: "/accessories", title: "Accessory Inventory", desc: "Buttons, zips, labels, packaging", icon: Package },
   { href: "/production", title: "Production Orders", desc: "Cutting, stitching, QC, rework", icon: Factory },
+  { href: "/expenses", title: "Expenses", desc: "Salaries, commissions, inventory costs", icon: Receipt },
 ];
 
 export default async function Home() {

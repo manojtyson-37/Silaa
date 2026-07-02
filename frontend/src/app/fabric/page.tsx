@@ -27,6 +27,24 @@ export default async function FabricPage() {
         )}
       </div>
 
+      {fabricItems.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {fabricItems.map((item) => (
+            <Card key={item.id} className="p-3 flex gap-3 items-center">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.name} className="w-12 h-12 object-cover rounded border border-border shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded border border-border bg-muted shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                {item.width && <p className="text-xs text-muted-foreground">{item.width} m wide</p>}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {lots.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground text-sm">No fabric lots yet.</Card>
       ) : (

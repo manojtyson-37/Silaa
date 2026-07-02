@@ -23,6 +23,19 @@ export const api = {
     request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }, token),
   patch: <T>(path: string, body?: unknown, token?: string) =>
     request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }, token),
+  delete: <T>(path: string, token?: string) =>
+    request<T>(path, { method: "DELETE" }, token),
+  upload: async (file: File, token?: string): Promise<{ url: string }> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE}/upload`, {
+      method: "POST",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: form,
+    });
+    if (!res.ok) throw new Error(`Upload failed: ${await res.text()}`);
+    return res.json();
+  },
 };
 
 export type FabricItem = {
@@ -32,6 +45,7 @@ export type FabricItem = {
   gsm: number | null;
   width: string | null;
   consumption_uom: string;
+  image_url: string | null;
 };
 
 export type FabricLot = {
@@ -50,7 +64,7 @@ export type AccessoryItem = {
   default_cost: string | null;
 };
 
-export type Style = { id: number; name: string; category: string | null; collection: string | null };
+export type Style = { id: number; name: string; category: string | null; collection: string | null; image_url: string | null };
 export type StyleVariant = {
   id: number;
   style_id: number;
@@ -138,4 +152,15 @@ export type WastageRejectionReport = {
   wastage_by_style: { style_id: number; wastage_qty: string }[];
   rejection_by_vendor: { vendor_id: number | null; rejected_qty: string }[];
   scrapped_by_style: { style_id: number; scrapped_qty: string }[];
+};
+
+export type ExpenseCategory = { id: number; name: string; color: string | null };
+export type Expense = {
+  id: number;
+  category_id: number;
+  amount: string;
+  expense_date: string;
+  description: string;
+  paid_to: string | null;
+  tags: string[];
 };

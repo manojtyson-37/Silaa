@@ -16,6 +16,7 @@ class StyleIn(BaseModel):
     name: str
     category: Optional[str] = None
     collection: Optional[str] = None
+    image_url: Optional[str] = None
 
 
 class StyleOut(StyleIn):

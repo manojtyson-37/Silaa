@@ -16,6 +16,7 @@ class FabricItem(Base):
     gsm: Mapped[int] = mapped_column(nullable=True)
     width: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=True)
     consumption_uom: Mapped[str] = mapped_column(String, nullable=False, default="meter")
+    image_url: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class FabricLot(Base):

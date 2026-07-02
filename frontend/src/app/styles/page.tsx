@@ -23,11 +23,20 @@ export default async function StylesPage() {
       <div className="flex flex-col gap-5">
         {styles.map((style, i) => (
           <Card key={style.id} className="p-5">
-            <div className="mb-3">
-              <h2 className="font-medium text-foreground">{style.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {style.category} · {style.collection}
-              </p>
+            <div className="flex gap-4 mb-3">
+              {style.image_url && (
+                <img
+                  src={style.image_url}
+                  alt={style.name}
+                  className="w-20 h-20 object-cover rounded-lg shrink-0 border border-border"
+                />
+              )}
+              <div>
+                <h2 className="font-medium text-foreground">{style.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {style.category} · {style.collection}
+                </p>
+              </div>
             </div>
             <Table>
               <thead>

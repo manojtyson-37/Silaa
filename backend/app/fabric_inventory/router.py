@@ -20,6 +20,7 @@ class FabricItemIn(BaseModel):
     gsm: Optional[int] = None
     width: Optional[Decimal] = None
     consumption_uom: str = "meter"
+    image_url: Optional[str] = None
 
 
 class FabricItemOut(FabricItemIn):

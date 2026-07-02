@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, LogOut, Shirt, Package, ClipboardList, ShoppingCart, BarChart3 } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt } from "lucide-react";
 import { clearClientToken } from "@/lib/clientAuth";
 
 const NAV = [
@@ -10,9 +10,8 @@ const NAV = [
   { href: "/styles", label: "Styles & Variants", icon: Shirt },
   { href: "/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
   { href: "/fabric", label: "Fabric Inventory", icon: Boxes },
-  { href: "/accessories", label: "Accessory Inventory", icon: Package },
   { href: "/production", label: "Production Orders", icon: Factory },
-  { href: "/sales-orders", label: "Sales Orders", icon: ShoppingCart },
+  { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
