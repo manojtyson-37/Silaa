@@ -80,6 +80,7 @@ export type FabricItem = {
 export type FabricLot = {
   id: number;
   fabric_item_id: number;
+  supplier_id: number;
   received_qty: string;
   cost_per_uom: string;
   dye_lot_no: string | null;

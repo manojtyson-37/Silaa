@@ -50,6 +50,7 @@ class GRNIn(BaseModel):
 class LotOut(BaseModel):
     id: int
     fabric_item_id: int
+    supplier_id: int
     received_qty: Decimal
     cost_per_uom: Decimal
     dye_lot_no: Optional[str] = None
