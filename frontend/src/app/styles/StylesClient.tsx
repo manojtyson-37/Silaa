@@ -45,7 +45,7 @@ export default function StylesClient({ styles, variantsByStyle }: Props) {
                 <Th>Size</Th>
                 <Th>Qty</Th>
                 <Th>Status</Th>
-                <Th></Th>
+                <Th> </Th>
               </tr>
             </thead>
             <tbody>
