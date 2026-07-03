@@ -8,3 +8,5 @@ backups/
 
 # graphify build artifacts (local, can be large)
 graphify-out/
+.vercel
+.env*

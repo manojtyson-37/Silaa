@@ -103,6 +103,22 @@ def list_fabric_lots(db: Session = Depends(get_db)):
     return db.query(FabricLot).all()
 
 
+class LotWithBalance(LotOut):
+    balance: Decimal
+
+
+@router.get("/fabric-lots-with-balance", response_model=list[LotWithBalance])
+def list_fabric_lots_with_balance(db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
+    lots = db.query(FabricLot).all()
+    return [
+        LotWithBalance(
+            **{c.key: getattr(l, c.key) for c in FabricLot.__table__.columns if hasattr(l, c.key)},
+            balance=fabric_balance(db, l.id, warehouse_id),
+        )
+        for l in lots
+    ]
+
+
 @router.post("/fabric-lots", response_model=LotOut)
 def grn(payload: GRNIn, db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
     item = db.get(FabricItem, payload.fabric_item_id)

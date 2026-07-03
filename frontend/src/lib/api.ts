@@ -58,6 +58,7 @@ export type FabricLot = {
   cost_per_uom: string;
   dye_lot_no: string | null;
 };
+export type FabricLotWithBalance = FabricLot & { balance: string };
 
 export type AccessoryItem = {
   id: number;
@@ -68,6 +69,7 @@ export type AccessoryItem = {
 };
 
 export type Style = { id: number; name: string; category: string | null; collection: string | null; image_url: string | null };
+export type StyleWithVariants = Style & { variants: StyleVariant[] };
 export type StyleVariant = {
   id: number;
   style_id: number;

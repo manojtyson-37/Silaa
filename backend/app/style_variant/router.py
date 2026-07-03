@@ -76,6 +76,22 @@ def list_variants(style_id: int, db: Session = Depends(get_db)):
     return db.query(StyleVariant).filter_by(style_id=style_id).all()
 
 
+class StyleWithVariants(StyleOut):
+    variants: list[VariantOut]
+
+
+@router.get("/styles-with-variants", response_model=list[StyleWithVariants])
+def list_styles_with_variants(db: Session = Depends(get_db)):
+    styles = db.query(Style).all()
+    return [
+        StyleWithVariants(
+            **{c.key: getattr(s, c.key) for c in Style.__table__.columns},
+            variants=db.query(StyleVariant).filter_by(style_id=s.id).all(),
+        )
+        for s in styles
+    ]
+
+
 @router.patch("/styles/{style_id}", response_model=StyleOut)
 def update_style(style_id: int, payload: StyleUpdate, db: Session = Depends(get_db)):
     style = db.get(Style, style_id)

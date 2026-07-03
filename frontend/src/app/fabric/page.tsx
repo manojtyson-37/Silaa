@@ -1,22 +1,17 @@
-import { api, FabricItem, FabricLot, Supplier } from "@/lib/api";
+import { api, FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 import NewFabricItemForm from "./NewFabricItemForm";
 import GRNForm from "./GRNForm";
 import FabricClient from "./FabricClient";
 import { requireAuth } from "@/lib/serverAuth";
 
-type Balance = { fabric_lot_id: number; balance: string };
-
 export default async function FabricPage() {
   const token = await requireAuth();
   const [lots, fabricItems, suppliers] = await Promise.all([
-    api.get<FabricLot[]>("/fabric-lots", token),
+    api.get<FabricLotWithBalance[]>("/fabric-lots-with-balance", token),
     api.get<FabricItem[]>("/fabric-items", token),
     api.get<Supplier[]>("/suppliers", token),
   ]);
-  const balances = await Promise.all(
-    lots.map((l) => api.get<Balance>(`/fabric-lots/${l.id}/balance`, token))
-  );
 
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">
@@ -43,12 +38,12 @@ export default async function FabricPage() {
             </tr>
           </thead>
           <tbody>
-            {lots.map((lot, i) => (
+            {lots.map((lot) => (
               <tr key={lot.id}>
                 <Td className="font-mono text-xs">#{lot.id}</Td>
                 <Td className="text-muted-foreground">{lot.dye_lot_no ?? "—"}</Td>
                 <Td>₹{lot.cost_per_uom}</Td>
-                <Td className="font-medium">{balances[i].balance}</Td>
+                <Td className="font-medium">{lot.balance}</Td>
               </tr>
             ))}
           </tbody>

@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`bg-surface rounded-xl border border-border shadow-sm ${className}`}>
+    <div className={`bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
       {children}
     </div>
   );
@@ -96,6 +96,30 @@ export function Th({ children }: { children: ReactNode }) {
   );
 }
 
+export function Tr({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <tr className={`hover:bg-muted/30 transition-colors duration-100 ${className}`}>{children}</tr>;
+}
+
 export function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <td className={`px-4 py-2.5 border-t border-border ${className}`}>{children}</td>;
+  return <td className={`px-4 py-3 border-t border-border ${className}`}>{children}</td>;
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-muted/60 ${className}`} />;
+}
+
+export function PageSkeleton() {
+  return (
+    <main className="max-w-5xl mx-auto px-8 py-10">
+      <div className="mb-6">
+        <Skeleton className="h-6 w-48 mb-1.5" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="space-y-3">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    </main>
+  );
 }
