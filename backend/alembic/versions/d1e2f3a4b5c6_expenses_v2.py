@@ -16,7 +16,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column("expense", sa.Column("receipt_url", sa.String(), nullable=True))
-    op.add_column("expense", sa.Column("is_recurring", sa.Boolean(), nullable=False, server_default=sa.text("0")))
+    op.add_column("expense", sa.Column("is_recurring", sa.Boolean(), nullable=False, server_default=sa.text("false")))
 
     op.create_table(
         "expense_category_budget",
