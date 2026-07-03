@@ -127,7 +127,7 @@ export default function UsersClient({ initialUsers, token }: { initialUsers: Use
                 </label>
                 <div className="flex gap-2">
                   <Button onClick={() => handleUpdateUser(user.id)} className="flex-1">Update</Button>
-                  <Button variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+                  <Button variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
                 </div>
               </div>
             )}
