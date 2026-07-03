@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, StyleWithVariants } from "@/lib/api";
 import { Button, Input, Select } from "@/components/ui";
+import { getClientToken } from "@/lib/clientAuth";
 
 type Props = {
   styles: StyleWithVariants[];
@@ -46,7 +47,7 @@ export default function NewProductionOrderForm({ styles, onClose, onCreated }: P
         variants: variantsPayload,
         source: source || "internal",
         created_by: "system", // Normally derived from auth
-      });
+      }, getClientToken());
       router.refresh();
       onCreated();
     } catch (err: unknown) {
