@@ -112,7 +112,7 @@ def list_fabric_lots_with_balance(db: Session = Depends(get_db), warehouse_id: i
     lots = db.query(FabricLot).all()
     return [
         LotWithBalance(
-            **{c.key: getattr(l, c.key) for c in FabricLot.__table__.columns if hasattr(l, c.key)},
+            **{c.key: getattr(l, c.key) for c in FabricLot.__table__.columns},
             balance=fabric_balance(db, l.id, warehouse_id),
         )
         for l in lots
