@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (Quick procurement enhancements & safe expense deletion)
+> Last updated: 2026-07-03 (Fabric inventory UI hierarchical redesign)
 
 ---
 
@@ -128,7 +128,7 @@ cd backend && source ../.env && alembic upgrade head
 - `/` — Dashboard (stat cards + recent activity)
 - `/login` — Auth
 - `/styles` — Style cards with variant tables. **Size dropdown** (XS–4XL + waist sizes), **Qty column**, inline pencil edit per row (`EditVariantRow` → `PATCH /variants/{id}`), inline "+ Add variant" form per card (`NewVariantForm`). Data from `/styles-with-variants` bulk endpoint.
-- `/fabric` — Fabric item cards. **Click any card** → full-width edit panel expands below grid (was cramped inline). Lots table with balance from `/fabric-lots-with-balance`.
+- `/fabric` — Hierarchical dashboard view. Fabric items display as expansive cards containing total stock balance, metadata, and an inline `+ Add Stock (GRN)` form. Each card houses a nested table of its specific `FabricLot`s (showing Supplier, Cost, Dye Lot, Balance). Data from `/fabric-items`, `/suppliers`, and `/fabric-lots-with-balance`.
 - `/purchase-orders` — PO list with Dispatch column. Rows link to detail page.
 - `/purchase-orders/[id]` — **PO detail**: editable when draft (dispatch date, tax%, payment terms dropdown, description textarea, reference photo upload). Line items with subtotal/tax/total breakdown.
 - `/purchase-orders/[id]/print` — **Sales Order PDF**: auto-triggers `window.print()`, styled invoice (SO-XXXX, bill-to, dates, payment terms, notes, line items, totals). "Download PDF" button.
