@@ -31,10 +31,10 @@ export default function Sidebar({ role }: { role: string }) {
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
               active
-                ? "bg-foreground text-surface shadow-sm"
-                : "text-secondary hover:bg-muted"
+                ? "bg-accent/15 text-accent shadow-[inset_2px_0_0_var(--color-accent)]"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
             <Icon size={16} strokeWidth={active ? 2.5 : 2} />
@@ -45,10 +45,10 @@ export default function Sidebar({ role }: { role: string }) {
       {role === "admin" && (
         <Link
           href="/users"
-          className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+          className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
             pathname === "/users"
-              ? "bg-foreground text-surface shadow-sm"
-              : "text-secondary hover:bg-muted"
+              ? "bg-accent/15 text-accent shadow-[inset_2px_0_0_var(--color-accent)]"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
           }`}
         >
           <Users size={16} strokeWidth={pathname === "/users" ? 2.5 : 2} />

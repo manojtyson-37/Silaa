@@ -1,20 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #000000;
+  /* Slate/Navy base for text and structure */
+  --color-primary: #0f172a;
   --color-on-primary: #ffffff;
-  --color-secondary: #4b5563;
-  --color-accent: #000000;
-  --color-background: #fbfbfa;
+  --color-secondary: #334155;
+  
+  /* Vibrant Indigo accent */
+  --color-accent: #4f46e5;
+  
+  /* Backgrounds */
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-border: #e5e7eb;
-  --color-destructive: #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-ring: #000000;
+  
+  /* Foreground text */
+  --color-foreground: #0f172a;
+  
+  /* Muted elements and borders */
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-ring: #cbd5e1;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-destructive: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #f8fafc;
+    --color-on-primary: #0f172a;
+    --color-secondary: #94a3b8;
+    --color-accent: #6366f1;
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+    --color-foreground: #f8fafc;
+    --color-muted: #334155;
+    --color-muted-foreground: #94a3b8;
+    --color-border: #334155;
+    --color-ring: #475569;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-destructive: #ef4444;
+  }
 }
 
 @theme inline {
