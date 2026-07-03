@@ -12,7 +12,9 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`${res.status} ${path}: ${body}`);
+    let msg = body;
+    try { const j = JSON.parse(body); if (typeof j.detail === "string") msg = j.detail; } catch {}
+    throw new Error(`${res.status} ${path}: ${msg}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

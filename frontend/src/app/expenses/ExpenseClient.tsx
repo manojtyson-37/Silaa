@@ -184,7 +184,11 @@ export default function ExpenseClient({
       setCategories(c => c.filter(x => x.id !== id));
     } catch (e) {
       const msg = e instanceof Error ? e.message.split(": ").slice(1).join(": ") : "";
-      setError(msg || "Failed to delete category.");
+      if (e instanceof Error && e.message.startsWith("404")) {
+        setCategories(c => c.filter(x => x.id !== id));
+      } else {
+        setError(msg || "Failed to delete category.");
+      }
     }
   };
 
