@@ -72,9 +72,9 @@ export default function GRNForm({ fabricItems, suppliers, preSelectedFabricId }:
         ))}
       </Select>
       <div className="flex gap-2">
-        <Input placeholder="PO line ID" className="w-28 shrink-0" value={poLineId} onChange={(e) => setPoLineId(e.target.value)} />
+        <Input placeholder="PO line ID" value={poLineId} onChange={(e) => setPoLineId(e.target.value)} />
         <Input placeholder="Received qty" value={receivedQty} onChange={(e) => setReceivedQty(e.target.value)} />
-        <Input placeholder="UOM" className="w-24 shrink-0" value={purchaseUom} onChange={(e) => setPurchaseUom(e.target.value)} />
+        <Input placeholder="UOM" value={purchaseUom} onChange={(e) => setPurchaseUom(e.target.value)} />
       </div>
       <div className="flex gap-2">
         <Input placeholder="Cost / unit" value={costPerUom} onChange={(e) => setCostPerUom(e.target.value)} />
