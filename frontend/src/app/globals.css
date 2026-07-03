@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #0f172a;
+  --color-primary: #000000;
   --color-on-primary: #ffffff;
-  --color-secondary: #334155;
-  --color-accent: #0369a1;
-  --color-background: #f8fafc;
+  --color-secondary: #f3f4f6;
+  --color-accent: #000000;
+  --color-background: #fbfbfa;
   --color-surface: #ffffff;
-  --color-foreground: #020617;
-  --color-muted: #e8ecf1;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
+  --color-foreground: #111827;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
   --color-destructive: #dc2626;
-  --color-success: #15803d;
-  --color-warning: #b45309;
-  --color-ring: #0f172a;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-ring: #000000;
 }
 
 @theme inline {
@@ -32,8 +32,8 @@
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-ring: var(--color-ring);
-  --font-sans: var(--font-fira-sans), system-ui, sans-serif;
-  --font-mono: var(--font-fira-code), ui-monospace, monospace;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 /* ponytail: light mode only -- this is an internal ops dashboard, not a

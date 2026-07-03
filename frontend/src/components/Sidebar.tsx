@@ -33,11 +33,11 @@ export default function Sidebar({ role }: { role: string }) {
             href={href}
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
               active
-                ? "bg-primary text-on-primary"
+                ? "bg-foreground text-surface shadow-sm"
                 : "text-secondary hover:bg-muted"
             }`}
           >
-            <Icon size={16} strokeWidth={2} />
+            <Icon size={16} strokeWidth={active ? 2.5 : 2} />
             {label}
           </Link>
         );
@@ -47,11 +47,11 @@ export default function Sidebar({ role }: { role: string }) {
           href="/users"
           className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
             pathname === "/users"
-              ? "bg-primary text-on-primary"
+              ? "bg-foreground text-surface shadow-sm"
               : "text-secondary hover:bg-muted"
           }`}
         >
-          <Users size={16} strokeWidth={2} />
+          <Users size={16} strokeWidth={pathname === "/users" ? 2.5 : 2} />
           Users
         </Link>
       )}
@@ -61,7 +61,7 @@ export default function Sidebar({ role }: { role: string }) {
           router.push("/login");
           router.refresh();
         }}
-        className="mt-auto flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:bg-muted hover:text-destructive cursor-pointer transition-colors duration-150"
+        className="mt-auto flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:bg-muted hover:text-foreground cursor-pointer transition-colors duration-150"
       >
         <LogOut size={16} strokeWidth={2} />
         Log out
