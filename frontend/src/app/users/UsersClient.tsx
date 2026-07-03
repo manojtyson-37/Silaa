@@ -29,8 +29,8 @@ export default function UsersClient({ initialUsers, token }: { initialUsers: Use
       setNewPassword("");
       setNewRole("viewer");
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -45,8 +45,8 @@ export default function UsersClient({ initialUsers, token }: { initialUsers: Use
       setEditingId(null);
       setEditPassword("");
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err));
     }
   };
 
