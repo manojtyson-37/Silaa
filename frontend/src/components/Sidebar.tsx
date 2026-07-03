@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt, Users } from "lucide-react";
 import { clearClientToken } from "@/lib/clientAuth";
+import { getTokenRole } from "@/lib/api";
 
 const NAV = [
   { href: "/", label: "Overview", icon: LayoutGrid },
@@ -18,6 +19,7 @@ const NAV = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const role = getTokenRole();
 
   return (
     <aside className="w-60 shrink-0 border-r border-border bg-surface min-h-screen px-3 py-5 flex flex-col gap-1">
@@ -42,6 +44,19 @@ export default function Sidebar() {
           </Link>
         );
       })}
+      {role === "admin" && (
+        <Link
+          href="/users"
+          className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+            pathname === "/users"
+              ? "bg-primary text-on-primary"
+              : "text-secondary hover:bg-muted"
+          }`}
+        >
+          <Users size={16} strokeWidth={2} />
+          Users
+        </Link>
+      )}
       <button
         onClick={() => {
           clearClientToken();

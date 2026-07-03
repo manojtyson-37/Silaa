@@ -24,6 +24,28 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
   return res.json();
 }
 
+export function decodeToken(token: string) {
+  try {
+    const [b64] = token.split(".");
+    const pad = "=".repeat((-b64.length % 4 + 4) % 4);
+    if (typeof window === "undefined") {
+      return JSON.parse(Buffer.from(b64.replace(/-/g, "+").replace(/_/g, "/") + pad, "base64").toString());
+    } else {
+      return JSON.parse(atob(b64.replace(/-/g, "+").replace(/_/g, "/") + pad));
+    }
+  } catch {
+    return { role: "viewer" };
+  }
+}
+
+export function getTokenRole(): "admin" | "editor" | "viewer" {
+  if (typeof document === "undefined") return "viewer";
+  const match = document.cookie.match(/(?:^|; )silaa_token=([^;]+)/);
+  if (!match) return "viewer";
+  const decoded = decodeToken(match[1]);
+  return decoded.role || "viewer";
+}
+
 export const api = {
   get: <T>(path: string, token?: string) => request<T>(path, undefined, token),
   post: <T>(path: string, body?: unknown, token?: string) =>
@@ -196,4 +218,11 @@ export type Expense = {
   tags: string[];
   receipt_urls: string[];
   is_recurring: boolean;
+};
+
+export type User = {
+  id: number;
+  username: string;
+  role: string;
+  is_active: boolean;
 };

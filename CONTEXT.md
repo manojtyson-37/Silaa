@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (multiple receipts + quick procurement via expenses)
+> Last updated: 2026-07-03 (User authentication & RBAC)
 
 ---
 
@@ -119,7 +119,8 @@ cd backend && source ../.env && alembic upgrade head
 - `orders/` — SalesOrder, atomic fulfill/cancel, 409 on insufficient stock
 - `dashboard/` — summary endpoint (open orders, pending POs, recent events)
 - `reports/` — fabric variance, wastage/rejection reports
-- `auth/` — HMAC token login, 12h TTL, single admin
+- `auth/` — HMAC token login, 12h TTL, single admin. Extended with `User` table, RBAC, password hashing (`pbkdf2_hmac`). Default admin seeded on startup.
+- `users/` — Admin-only endpoint for managing user roles (`viewer`, `editor`, `admin`) and statuses.
 - `expenses/` — ExpenseCategory, Expense, CategoryBudget, CompanySetting (v2)
 - `upload/` — Supabase Storage upload (10MB cap, public bucket `silaa-images`)
 
@@ -136,6 +137,7 @@ cd backend && source ../.env && alembic upgrade head
 - `/sales-orders` — Sales order list + fulfill/cancel + margin
 - `/reports` — Fabric variance + wastage
 - `/expenses` — Full expense tracker (v2)
+- `/users` — User management dashboard (admin only), decoding JWT payload client-side to enforce view limits.
 
 **All routes have `loading.tsx` skeleton screens** (sidebar stays rendered, content pulses). Global `error.tsx` error boundary with "Try again" button. `api.ts` 401 → auto-redirect to `/login`.
 
@@ -160,6 +162,7 @@ d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, Company
 e2f3a4b5c6d7 — qty (INTEGER DEFAULT 0) on style_variant
 f3a4b5c6d7e8 — description/image_url/dispatch_date/tax_rate/payment_terms on purchase_order
 0c6b1cd7690c — multiple_receipts_quick_procurement
+206ef6fe6a0f — add_users_table
 ```
 
 ---

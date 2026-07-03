@@ -1,7 +1,8 @@
 import os
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
@@ -19,6 +20,7 @@ from app.production import models as production_models  # noqa: F401
 from app.finished_goods import models as fg_models  # noqa: F401
 from app.orders import models as orders_models  # noqa: F401
 from app.expenses import models as expenses_models  # noqa: F401
+from app.auth import models as auth_models  # noqa: F401
 
 from app import wiring
 from app.procurement.router import router as procurement_router
@@ -34,8 +36,37 @@ from app.dashboard.router import router as dashboard_router
 from app.reports.router import router as reports_router
 from app.expenses.router import router as expenses_router
 from app.upload.router import router as upload_router
+from app.users.router import router as users_router
 
-app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0")
+from contextlib import asynccontextmanager
+
+from app.auth.models import User
+from app.auth.security import hash_password
+from app.auth.deps import ADMIN_USERNAME, ADMIN_PASSWORD
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.db import SessionLocal, engine, Base
+    
+    # Create tables if not exists
+    Base.metadata.create_all(bind=engine)
+    
+    # Seed default admin user if no users exist
+    db = SessionLocal()
+    try:
+        if not db.query(User).first():
+            admin = User(
+                username=ADMIN_USERNAME,
+                password_hash=hash_password(ADMIN_PASSWORD),
+                role="admin"
+            )
+            db.add(admin)
+            db.commit()
+    finally:
+        db.close()
+    yield
+
+app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0", lifespan=lifespan)
 
 _default_origins = "http://localhost:3000,http://localhost:3001"
 _origins = os.environ.get("FRONTEND_ORIGINS", _default_origins).split(",")
@@ -46,6 +77,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def role_middleware(request: Request, call_next):
+    auth = request.headers.get("Authorization")
+    if auth and auth.startswith("Bearer "):
+        try:
+            token = auth.split(" ")[1]
+            from app.auth.security import verify_token
+            payload = verify_token(token)
+            role = payload.get("role", "viewer")
+            method = request.method
+            # viewers cannot edit/delete
+            if role == "viewer" and method in ("PUT", "PATCH", "DELETE"):
+                return JSONResponse(status_code=403, content={"detail": "Viewers cannot edit or delete."})
+        except:
+            pass
+    return await call_next(request)
 
 wiring.configure()
 
@@ -65,6 +113,7 @@ app.include_router(dashboard_router, dependencies=_protected)
 app.include_router(reports_router, dependencies=_protected)
 app.include_router(expenses_router, dependencies=_protected)
 app.include_router(upload_router, dependencies=_protected)
+app.include_router(users_router) # dependencies are internal to users router
 
 
 @app.get("/health")

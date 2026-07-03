@@ -9,7 +9,7 @@ from app.auth.security import InvalidTokenError, verify_token
 _bearer = HTTPBearer(auto_error=False)
 
 
-def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)) -> str:
+def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)) -> dict:
     if creds is None:
         raise HTTPException(401, "Not authenticated")
     try:
@@ -18,5 +18,14 @@ def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(_be
         raise HTTPException(401, str(exc))
 
 
-ADMIN_USERNAME = os.environ["ADMIN_USERNAME"]
-ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
+
+class RequireRole:
+    def __init__(self, allowed_roles: list[str]):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: dict = Depends(get_current_user)):
+        if user.get("role") not in self.allowed_roles:
+            raise HTTPException(403, "Not enough permissions")
+        return user
