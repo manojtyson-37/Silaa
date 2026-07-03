@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt, Users } from "lucide-react";
 import { clearClientToken } from "@/lib/clientAuth";
-import { getTokenRole } from "@/lib/api";
 
 const NAV = [
   { href: "/", label: "Overview", icon: LayoutGrid },
@@ -16,10 +15,9 @@ const NAV = [
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const role = getTokenRole();
 
   return (
     <aside className="w-60 shrink-0 border-r border-border bg-surface min-h-screen px-3 py-5 flex flex-col gap-1">
