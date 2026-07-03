@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -31,3 +31,4 @@ class StyleVariant(Base):
     barcode: Mapped[str] = mapped_column(String, nullable=True)
     selling_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="active")
+    qty: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

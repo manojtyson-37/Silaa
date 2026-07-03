@@ -80,6 +80,7 @@ export type StyleVariant = {
   color: string;
   size: string;
   sku_code: string;
+  qty: number;
   status: string;
 };
 

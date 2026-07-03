@@ -34,6 +34,17 @@ class VariantIn(BaseModel):
     color: str
     size: str
     sku_code: str
+    qty: int = 0
+    barcode: Optional[str] = None
+    selling_price: Optional[Decimal] = None
+
+
+class VariantUpdate(BaseModel):
+    color: Optional[str] = None
+    size: Optional[str] = None
+    sku_code: Optional[str] = None
+    qty: Optional[int] = None
+    status: Optional[str] = None
     barcode: Optional[str] = None
     selling_price: Optional[Decimal] = None
 
@@ -74,6 +85,21 @@ def create_variant(style_id: int, payload: VariantIn, db: Session = Depends(get_
 @router.get("/styles/{style_id}/variants", response_model=list[VariantOut])
 def list_variants(style_id: int, db: Session = Depends(get_db)):
     return db.query(StyleVariant).filter_by(style_id=style_id).all()
+
+
+@router.patch("/variants/{variant_id}", response_model=VariantOut)
+def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depends(get_db)):
+    variant = db.get(StyleVariant, variant_id)
+    if variant is None:
+        raise HTTPException(404, "Variant not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(variant, k, v)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "sku_code already exists")
+    return variant
 
 
 class StyleWithVariants(StyleOut):

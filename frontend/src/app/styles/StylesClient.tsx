@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Style, StyleVariant } from "@/lib/api";
-import { Card, StatusPill, Table, Td, Th } from "@/components/ui";
+import { Card, Table, Th } from "@/components/ui";
 import EditStyleForm from "./EditStyleForm";
 import NewVariantForm from "./NewVariantForm";
+import EditVariantRow from "./EditVariantRow";
 
 type Props = {
   styles: Style[];
@@ -42,19 +43,14 @@ export default function StylesClient({ styles, variantsByStyle }: Props) {
                 <Th>SKU</Th>
                 <Th>Color</Th>
                 <Th>Size</Th>
+                <Th>Qty</Th>
                 <Th>Status</Th>
+                <Th></Th>
               </tr>
             </thead>
             <tbody>
               {variantsByStyle[i].map((v) => (
-                <tr key={v.id}>
-                  <Td className="font-mono text-xs">{v.sku_code}</Td>
-                  <Td>{v.color}</Td>
-                  <Td>{v.size}</Td>
-                  <Td>
-                    <StatusPill value={v.status} />
-                  </Td>
-                </tr>
+                <EditVariantRow key={v.id} v={v} />
               ))}
             </tbody>
           </Table>
