@@ -1,7 +1,8 @@
 import enum
 from decimal import Decimal
+from datetime import date
 
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import Date, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.db import Base
@@ -29,6 +30,11 @@ class PurchaseOrder(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("supplier.id"), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default=POStatus.DRAFT.value)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    image_url: Mapped[str] = mapped_column(String, nullable=True)
+    dispatch_date: Mapped[date] = mapped_column(Date, nullable=True)
+    tax_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=True, default=Decimal("0"))
+    payment_terms: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class PurchaseOrderLine(Base):

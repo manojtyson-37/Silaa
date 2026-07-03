@@ -100,7 +100,16 @@ export type ProductionEvent = {
 };
 
 export type Supplier = { id: number; name: string; type: string };
-export type PurchaseOrder = { id: number; supplier_id: number; status: string };
+export type PurchaseOrder = {
+  id: number;
+  supplier_id: number;
+  status: string;
+  description: string | null;
+  image_url: string | null;
+  dispatch_date: string | null;
+  tax_rate: string | null;
+  payment_terms: string | null;
+};
 export type PurchaseOrderLine = {
   id: number;
   component_type: string;

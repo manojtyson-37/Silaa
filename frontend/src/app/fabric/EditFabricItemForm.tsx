@@ -1,18 +1,17 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Edit2, X } from "lucide-react";
 import { api, FabricItem } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 
 type Props = {
   item: FabricItem;
   onSaved: () => void;
+  onCancel: () => void;
 };
 
-export default function EditFabricItemForm({ item, onSaved }: Props) {
-  const [editing, setEditing] = useState(false);
+export default function EditFabricItemForm({ item, onSaved, onCancel }: Props) {
   const [form, setForm] = useState({
     name: item.name,
     composition: item.composition || "",
@@ -48,89 +47,55 @@ export default function EditFabricItemForm({ item, onSaved }: Props) {
       if (form.gsm) payload.gsm = parseInt(form.gsm, 10);
       if (form.width) payload.width = parseFloat(form.width);
       await api.patch(`/fabric-items/${item.id}`, payload, getClientToken());
-      setEditing(false);
       onSaved();
-    } catch (e) {
+    } catch {
       setError("Failed to update. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (!editing) {
-    return (
-      <button
-        onClick={() => setEditing(true)}
-        className="text-muted-foreground hover:text-foreground p-1 transition-colors"
-        title="Edit fabric item"
-      >
-        <Edit2 size={16} />
-      </button>
-    );
-  }
-
   return (
-    <Card className="p-4 bg-muted/30 flex flex-col gap-2.5 mb-3">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-medium text-sm">Edit fabric item</h3>
-        <button onClick={() => setEditing(false)} className="text-muted-foreground hover:text-foreground p-1">
-          <X size={14} />
-        </button>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground">Name</label>
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground">Composition</label>
+        <Input placeholder="e.g. 60% Cotton 40% Poly" value={form.composition} onChange={(e) => setForm({ ...form, composition: e.target.value })} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground">GSM</label>
+        <Input type="number" value={form.gsm} onChange={(e) => setForm({ ...form, gsm: e.target.value })} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground">Width (m)</label>
+        <Input type="number" step="0.01" value={form.width} onChange={(e) => setForm({ ...form, width: e.target.value })} />
       </div>
 
-      <Input
-        placeholder="Name"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-      />
-      <Input
-        placeholder="Composition"
-        value={form.composition}
-        onChange={(e) => setForm({ ...form, composition: e.target.value })}
-      />
-      <Input
-        placeholder="GSM"
-        type="number"
-        value={form.gsm}
-        onChange={(e) => setForm({ ...form, gsm: e.target.value })}
-      />
-      <Input
-        placeholder="Width (m)"
-        type="number"
-        step="0.01"
-        value={form.width}
-        onChange={(e) => setForm({ ...form, width: e.target.value })}
-      />
-
-      <div>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <div className="col-span-full flex items-center gap-4">
+        {imageUrl && (
+          <img src={imageUrl} alt="preview" className="w-14 h-14 object-cover rounded border border-border" />
+        )}
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
           className="text-sm text-accent hover:text-primary cursor-pointer disabled:opacity-50"
         >
-          {uploading ? "Uploading..." : "Change image"}
+          {uploading ? "Uploading..." : imageUrl ? "Change image" : "Add image"}
         </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="col-span-full text-xs text-destructive">{error}</p>}
 
-      <div className="flex gap-2 mt-2">
-        <Button
-          onClick={submit}
-          disabled={saving}
-          className="text-xs flex-1"
-        >
-          {saving ? "Saving..." : "Save"}
+      <div className="col-span-full flex gap-2">
+        <Button onClick={submit} disabled={saving}>
+          {saving ? "Saving..." : "Save changes"}
         </Button>
-        <Button
-          onClick={() => setEditing(false)}
-          variant="ghost"
-          className="text-xs flex-1"
-        >
-          Cancel
-        </Button>
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
       </div>
-    </Card>
+    </div>
   );
 }

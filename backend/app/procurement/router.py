@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import Optional
 
@@ -38,10 +39,28 @@ class PurchaseOrderOut(BaseModel):
     id: int
     supplier_id: int
     status: str
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    dispatch_date: Optional[date] = None
+    tax_rate: Optional[Decimal] = None
+    payment_terms: Optional[str] = None
 
 
 class PurchaseOrderUpdate(BaseModel):
     supplier_id: Optional[int] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    dispatch_date: Optional[date] = None
+    tax_rate: Optional[Decimal] = None
+    payment_terms: Optional[str] = None
+
+
+class POLineOut(POLineIn):
+    id: int
+
+
+class PurchaseOrderDetail(PurchaseOrderOut):
+    lines: list[POLineOut]
 
 
 @router.post("/suppliers", response_model=SupplierOut)
@@ -65,36 +84,48 @@ def create_purchase_order(payload: PurchaseOrderIn, db: Session = Depends(get_db
     for line in payload.lines:
         db.add(PurchaseOrderLine(po_id=po.id, **line.model_dump()))
     db.commit()
-    return po
+    return PurchaseOrderOut(
+        id=po.id, supplier_id=po.supplier_id, status=po.status,
+        description=po.description, image_url=po.image_url,
+        dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
+    )
 
 
 @router.get("/purchase-orders", response_model=list[PurchaseOrderOut])
 def list_purchase_orders(db: Session = Depends(get_db)):
-    return db.query(PurchaseOrder).all()
+    rows = db.query(PurchaseOrder).all()
+    return [
+        PurchaseOrderOut(
+            id=po.id, supplier_id=po.supplier_id, status=po.status,
+            description=po.description, image_url=po.image_url,
+            dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
+        )
+        for po in rows
+    ]
 
 
-@router.get("/purchase-orders/{po_id}")
+@router.get("/purchase-orders/{po_id}", response_model=PurchaseOrderDetail)
 def get_purchase_order(po_id: int, db: Session = Depends(get_db)):
     po = db.get(PurchaseOrder, po_id)
     if po is None:
         raise HTTPException(404, "PurchaseOrder not found")
     lines = db.query(PurchaseOrderLine).filter_by(po_id=po_id).all()
-    return {
-        "id": po.id,
-        "supplier_id": po.supplier_id,
-        "status": po.status,
-        "lines": [
-            {
-                "id": l.id,
-                "component_type": l.component_type,
-                "component_id": l.component_id,
-                "ordered_qty": l.ordered_qty,
-                "ordered_uom": l.ordered_uom,
-                "agreed_price": l.agreed_price,
-            }
+    return PurchaseOrderDetail(
+        id=po.id, supplier_id=po.supplier_id, status=po.status,
+        description=po.description, image_url=po.image_url,
+        dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
+        lines=[
+            POLineOut(
+                id=l.id,
+                component_type=l.component_type,
+                component_id=l.component_id,
+                ordered_qty=l.ordered_qty,
+                ordered_uom=l.ordered_uom,
+                agreed_price=l.agreed_price,
+            )
             for l in lines
         ],
-    }
+    )
 
 
 @router.patch("/purchase-orders/{po_id}", response_model=PurchaseOrderOut)
@@ -107,7 +138,11 @@ def update_purchase_order(po_id: int, payload: PurchaseOrderUpdate, db: Session 
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(po, k, v)
     db.commit()
-    return po
+    return PurchaseOrderOut(
+        id=po.id, supplier_id=po.supplier_id, status=po.status,
+        description=po.description, image_url=po.image_url,
+        dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
+    )
 
 
 @router.patch("/purchase-orders/{po_id}/approve", response_model=PurchaseOrderOut)
@@ -119,7 +154,11 @@ def approve_purchase_order(po_id: int, db: Session = Depends(get_db)):
         approve_po(db, po)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    return po
+    return PurchaseOrderOut(
+        id=po.id, supplier_id=po.supplier_id, status=po.status,
+        description=po.description, image_url=po.image_url,
+        dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
+    )
 
 
 @router.get("/purchase-order-lines/{line_id}/outstanding")
@@ -129,8 +168,6 @@ def outstanding(line_id: int, db: Session = Depends(get_db)):
     line = db.get(PurchaseOrderLine, line_id)
     if line is None:
         raise HTTPException(404, "PurchaseOrderLine not found")
-    received = (
-        db.query(FabricLot).filter_by(po_line_id=line_id).all()
-    )
+    received = db.query(FabricLot).filter_by(po_line_id=line_id).all()
     received_qty = sum((lot.received_qty for lot in received), Decimal(0))
     return {"line_id": line_id, "ordered_qty": line.ordered_qty, "outstanding_qty": line.ordered_qty - received_qty}
