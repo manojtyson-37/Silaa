@@ -140,8 +140,13 @@ def list_settings(db: Session = Depends(get_db)):
     return db.scalars(select(CompanySetting)).all()
 
 
+_ALLOWED_SETTING_KEYS = {"currency"}
+
+
 @router.patch("/company-settings/{key}", response_model=SettingOut)
 def upsert_setting(key: str, payload: SettingIn, db: Session = Depends(get_db)):
+    if key not in _ALLOWED_SETTING_KEYS:
+        raise HTTPException(400, f"Unknown setting key: {key}")
     setting = db.get(CompanySetting, key)
     if setting:
         setting.value = payload.value

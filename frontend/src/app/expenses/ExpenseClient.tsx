@@ -45,6 +45,46 @@ function currentYM() {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function sanitizeCSVCell(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
+function ReceiptControls({
+  url, onFile, onClear, inputRef, uploading,
+}: {
+  url: string | null;
+  onFile: (f: File) => void;
+  onClear: () => void;
+  inputRef: { current: HTMLInputElement | null };
+  uploading: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50"
+      >
+        <Paperclip size={11} />
+        {url ? "Receipt ✓" : "Attach receipt"}
+      </button>
+      {url && (
+        <button type="button" onClick={onClear} className="text-muted-foreground hover:text-foreground">
+          <X size={11} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 const BLANK_FORM = () => ({
   category_id: "", amount: "",
   expense_date: new Date().toISOString().slice(0, 10),
@@ -174,10 +214,14 @@ export default function ExpenseClient({
   // ── Settings ───────────────────────────────────────────────────────────────
 
   const updateCurrency = async (value: string) => {
+    const prev = currency;
     setCurrency(value);
     try {
       await api.patch("/company-settings/currency", { value }, getClientToken());
-    } catch { /* non-critical */ }
+    } catch {
+      setCurrency(prev);
+      setError("Failed to save currency setting.");
+    }
   };
 
   // ── Receipt upload ─────────────────────────────────────────────────────────
@@ -270,48 +314,13 @@ export default function ExpenseClient({
       e.receipt_url ?? "",
     ]);
     const csv = [header, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .map(r => r.map(v => `"${sanitizeCSVCell(String(v)).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     a.download = `expenses-${selectedMonth}.csv`;
     a.click();
   };
-
-  // ── Shared receipt UI ──────────────────────────────────────────────────────
-
-  const ReceiptControls = ({
-    url, onFile, onClear, inputRef,
-  }: {
-    url: string | null;
-    onFile: (f: File) => void;
-    onClear: () => void;
-    inputRef: { current: HTMLInputElement | null };
-  }) => (
-    <div className="flex items-center gap-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,application/pdf"
-        className="hidden"
-        onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }}
-      />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50"
-      >
-        <Paperclip size={11} />
-        {url ? "Receipt ✓" : "Attach receipt"}
-      </button>
-      {url && (
-        <button type="button" onClick={onClear} className="text-muted-foreground hover:text-foreground">
-          <X size={11} />
-        </button>
-      )}
-    </div>
-  );
 
   // ── JSX ────────────────────────────────────────────────────────────────────
 
@@ -600,6 +609,7 @@ export default function ExpenseClient({
                 onFile={f => uploadReceipt(f, false)}
                 onClear={() => setExpForm(f => ({ ...f, receipt_url: null }))}
                 inputRef={receiptRef}
+                uploading={uploading}
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -680,6 +690,7 @@ export default function ExpenseClient({
                         onFile={f => uploadReceipt(f, true)}
                         onClear={() => setEditExpForm(f => f ? { ...f, receipt_url: null } : f)}
                         inputRef={editReceiptRef}
+                        uploading={uploading}
                       />
                     </div>
                     <div className="flex gap-2 pt-1">
