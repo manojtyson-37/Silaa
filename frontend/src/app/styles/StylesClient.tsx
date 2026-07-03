@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Style, StyleVariant } from "@/lib/api";
 import { Card, StatusPill, Table, Td, Th } from "@/components/ui";
 import EditStyleForm from "./EditStyleForm";
+import NewVariantForm from "./NewVariantForm";
 
 type Props = {
   styles: Style[];
@@ -57,6 +58,7 @@ export default function StylesClient({ styles, variantsByStyle }: Props) {
               ))}
             </tbody>
           </Table>
+          <NewVariantForm styleId={style.id} />
         </Card>
       ))}
     </div>
