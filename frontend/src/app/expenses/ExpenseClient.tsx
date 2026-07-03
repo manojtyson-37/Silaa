@@ -182,7 +182,10 @@ export default function ExpenseClient({
     try {
       await api.delete(`/expense-categories/${id}`, getClientToken());
       setCategories(c => c.filter(x => x.id !== id));
-    } catch { setError("Failed to delete category."); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message.split(": ").slice(1).join(": ") : "";
+      setError(msg || "Failed to delete category.");
+    }
   };
 
   // ── Budget actions ─────────────────────────────────────────────────────────
