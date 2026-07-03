@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, JSON, Numeric, String
+from sqlalchemy import Boolean, Date, ForeignKey, JSON, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -12,8 +12,23 @@ class ExpenseCategory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    color: Mapped[str] = mapped_column(String, nullable=True)  # hex accent color for UI badge
-    icon: Mapped[str] = mapped_column(String, nullable=True)  # lucide icon name for UI badge
+    color: Mapped[str] = mapped_column(String, nullable=True)
+    icon: Mapped[str] = mapped_column(String, nullable=True)
+
+
+class CategoryBudget(Base):
+    __tablename__ = "expense_category_budget"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey("expense_category.id"), unique=True, nullable=False)
+    monthly_limit: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+
+class CompanySetting(Base):
+    __tablename__ = "company_setting"
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class Expense(Base):
@@ -26,3 +41,5 @@ class Expense(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     paid_to: Mapped[str] = mapped_column(String, nullable=True)
+    receipt_url: Mapped[str] = mapped_column(String, nullable=True)
+    is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

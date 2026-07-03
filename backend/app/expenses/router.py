@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.expenses.models import Expense, ExpenseCategory
+from app.expenses.models import CategoryBudget, CompanySetting, Expense, ExpenseCategory
 
 router = APIRouter(tags=["expenses"])
 
@@ -83,6 +83,76 @@ def delete_category(id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
+# ── Category Budgets ─────────────────────────────────────────────────────────
+
+class CategoryBudgetIn(BaseModel):
+    monthly_limit: Decimal
+
+
+class CategoryBudgetOut(BaseModel):
+    id: int
+    category_id: int
+    monthly_limit: Decimal
+
+
+@router.get("/expense-category-budgets", response_model=list[CategoryBudgetOut])
+def list_budgets(db: Session = Depends(get_db)):
+    return db.scalars(select(CategoryBudget)).all()
+
+
+@router.patch("/expense-category-budgets/{category_id}", response_model=CategoryBudgetOut)
+def upsert_budget(category_id: int, payload: CategoryBudgetIn, db: Session = Depends(get_db)):
+    if not db.get(ExpenseCategory, category_id):
+        raise HTTPException(404, "Category not found")
+    budget = db.scalar(select(CategoryBudget).where(CategoryBudget.category_id == category_id))
+    if budget:
+        budget.monthly_limit = payload.monthly_limit
+    else:
+        budget = CategoryBudget(category_id=category_id, monthly_limit=payload.monthly_limit)
+        db.add(budget)
+    db.commit()
+    db.refresh(budget)
+    return budget
+
+
+@router.delete("/expense-category-budgets/{category_id}", status_code=204)
+def delete_budget(category_id: int, db: Session = Depends(get_db)):
+    budget = db.scalar(select(CategoryBudget).where(CategoryBudget.category_id == category_id))
+    if not budget:
+        raise HTTPException(404, "Budget not found")
+    db.delete(budget)
+    db.commit()
+
+
+# ── Company Settings ──────────────────────────────────────────────────────────
+
+class SettingIn(BaseModel):
+    value: str
+
+
+class SettingOut(BaseModel):
+    key: str
+    value: str
+
+
+@router.get("/company-settings", response_model=list[SettingOut])
+def list_settings(db: Session = Depends(get_db)):
+    return db.scalars(select(CompanySetting)).all()
+
+
+@router.patch("/company-settings/{key}", response_model=SettingOut)
+def upsert_setting(key: str, payload: SettingIn, db: Session = Depends(get_db)):
+    setting = db.get(CompanySetting, key)
+    if setting:
+        setting.value = payload.value
+    else:
+        setting = CompanySetting(key=key, value=payload.value)
+        db.add(setting)
+    db.commit()
+    db.refresh(setting)
+    return setting
+
+
 # ── Expenses ─────────────────────────────────────────────────────────────────
 
 class ExpenseIn(BaseModel):
@@ -92,6 +162,8 @@ class ExpenseIn(BaseModel):
     description: str
     paid_to: Optional[str] = None
     tags: list[str] = []
+    receipt_url: Optional[str] = None
+    is_recurring: bool = False
 
 
 class ExpenseUpdate(BaseModel):
@@ -101,6 +173,8 @@ class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     paid_to: Optional[str] = None
     tags: Optional[list[str]] = None
+    receipt_url: Optional[str] = None
+    is_recurring: Optional[bool] = None
 
 
 class ExpenseOut(BaseModel):
@@ -111,6 +185,8 @@ class ExpenseOut(BaseModel):
     description: str
     paid_to: Optional[str]
     tags: list[str]
+    receipt_url: Optional[str]
+    is_recurring: bool
 
 
 @router.get("/expenses", response_model=list[ExpenseOut])

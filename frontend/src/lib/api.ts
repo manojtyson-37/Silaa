@@ -155,6 +155,8 @@ export type WastageRejectionReport = {
 };
 
 export type ExpenseCategory = { id: number; name: string; color: string | null; icon: string | null };
+export type CategoryBudget = { id: number; category_id: number; monthly_limit: string };
+export type CompanySetting = { key: string; value: string };
 export type Expense = {
   id: number;
   category_id: number;
@@ -163,4 +165,6 @@ export type Expense = {
   description: string;
   paid_to: string | null;
   tags: string[];
+  receipt_url: string | null;
+  is_recurring: boolean;
 };
