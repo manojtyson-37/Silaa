@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
+import { api, FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
 import { Card, Table, Th, Td, Tr } from "@/components/ui";
 import EditFabricItemForm from "./EditFabricItemForm";
 import GRNForm from "./GRNForm";
@@ -31,17 +31,40 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
         return (
           <Card key={`${item.id}-${refreshKey}`} className="p-5">
             <div className="flex gap-4 mb-4">
-              {item.image_url ? (
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  className="w-20 h-20 object-cover rounded-lg shrink-0 border border-border"
+              <label className="relative group cursor-pointer w-20 h-20 shrink-0 block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const { getClientToken } = await import("@/lib/clientAuth");
+                      const { url } = await api.upload(file, getClientToken());
+                      await api.patch(`/fabric-items/${item.id}`, { image_url: url }, getClientToken());
+                      setRefreshKey(k => k + 1);
+                    } catch (err) {
+                      console.error("Upload failed", err);
+                      alert("Failed to upload image");
+                    }
+                  }}
                 />
-              ) : (
-                <div className="w-20 h-20 rounded-lg border border-border bg-muted flex items-center justify-center shrink-0 text-muted-foreground text-xs">
-                  No Image
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-full h-full object-cover rounded-lg border border-border group-hover:opacity-75 transition-opacity"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-lg border border-border bg-muted flex items-center justify-center text-muted-foreground text-xs group-hover:bg-muted/80 transition-colors">
+                    No Image
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg pointer-events-none">
+                  <Pencil size={16} className="text-white" />
                 </div>
-              )}
+              </label>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
