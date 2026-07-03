@@ -106,14 +106,15 @@ def list_fabric_lots(db: Session = Depends(get_db)):
 class LotWithBalance(LotOut):
     balance: Decimal
 
+    model_config = {"from_attributes": True}
+
 
 @router.get("/fabric-lots-with-balance", response_model=list[LotWithBalance])
 def list_fabric_lots_with_balance(db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
     lots = db.query(FabricLot).all()
     return [
-        LotWithBalance(
-            **{c.key: getattr(l, c.key) for c in FabricLot.__table__.columns},
-            balance=fabric_balance(db, l.id, warehouse_id),
+        LotWithBalance.model_validate(
+            {c.key: getattr(l, c.key) for c in FabricLot.__table__.columns} | {"balance": fabric_balance(db, l.id, warehouse_id)}
         )
         for l in lots
     ]

@@ -79,15 +79,17 @@ def list_variants(style_id: int, db: Session = Depends(get_db)):
 class StyleWithVariants(StyleOut):
     variants: list[VariantOut]
 
+    model_config = {"from_attributes": True}
+
 
 @router.get("/styles-with-variants", response_model=list[StyleWithVariants])
 def list_styles_with_variants(db: Session = Depends(get_db)):
     styles = db.query(Style).all()
     style_ids = [s.id for s in styles]
     variants = db.query(StyleVariant).filter(StyleVariant.style_id.in_(style_ids)).all()
-    variants_by_style: dict[int, list[StyleVariant]] = {}
+    variants_by_style: dict[int, list] = {}
     for v in variants:
-        variants_by_style.setdefault(v.style_id, []).append(v)
+        variants_by_style.setdefault(v.style_id, []).append(VariantOut.model_validate(v, from_attributes=True))
     return [
         StyleWithVariants(
             **{c.key: getattr(s, c.key) for c in Style.__table__.columns},
