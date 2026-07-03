@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (User authentication & RBAC)
+> Last updated: 2026-07-03 (Quick procurement enhancements & safe expense deletion)
 
 ---
 
@@ -148,7 +148,8 @@ cd backend && source ../.env && alembic upgrade head
 - Category budget tracking: per-category monthly limit, progress bar (red when over)
 - Recurring flag on expenses (↻ icon)
 - **Multiple receipt file uploads** to Supabase storage per expense
-- **Quick Procurement UI**: Dynamic inline form for adding multiple fabrics and suppliers on-the-fly when "Procurement" category is selected. Auto-calculates total and creates FabricLot + GRN entries in inventory.
+- **Quick Procurement UI**: Dynamic inline form for adding multiple fabrics and suppliers on-the-fly when "Procurement" category is selected. Allows specifying fabric Composition, GSM, and Width directly in the form. Auto-calculates total and creates FabricLot + GRN entries in inventory.
+- **Safe Expense Deletion**: Deleting a procurement expense safely cascades to delete the unconsumed fabric lot and ledger entry. Blocks deletion (409 Conflict) if the fabric has already been consumed.
 - Currency setting (₹ INR default, supports USD/EUR/GBP/JPY) — stored server-side in `company_setting` table
 
 ### Current migrations (in order)
