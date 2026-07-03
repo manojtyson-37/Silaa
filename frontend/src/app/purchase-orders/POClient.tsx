@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { PurchaseOrder, Supplier } from "@/lib/api";
-import { StatusPill, Table, Td, Th } from "@/components/ui";
+import { StatusPill, Card } from "@/components/ui";
 import ApproveButton from "./ApproveButton";
 import EditPOForm from "./EditPOForm";
 
@@ -18,47 +18,53 @@ export default function POClient({ orders, suppliers }: Props) {
   const supplierName = (id: number) => suppliers.find((s) => s.id === id)?.name ?? `#${id}`;
 
   return (
-    <Table>
-      <thead>
-        <tr>
-          <Th>PO</Th>
-          <Th>Supplier</Th>
-          <Th>Dispatch</Th>
-          <Th>Status</Th>
-          <Th>Action</Th>
-        </tr>
-      </thead>
-      <tbody>
-        {orders.map((po) => (
-          <tr key={`${po.id}-${refreshKey}`} className="group">
-            <Td className="font-mono text-xs">
-              <Link href={`/purchase-orders/${po.id}`} className="hover:text-accent transition-colors">
-                #{po.id}
-              </Link>
-            </Td>
-            <Td className="flex items-center gap-2">
-              <Link href={`/purchase-orders/${po.id}`} className="hover:text-accent transition-colors flex-1">
-                {supplierName(po.supplier_id)}
-              </Link>
+    <div className="flex flex-col gap-3 mt-6">
+      {orders.map((po) => (
+        <Card key={`${po.id}-${refreshKey}`} className="px-5 py-4 flex items-center justify-between group hover:border-accent hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center gap-5">
+            {po.image_url ? (
+              <div className="w-14 h-14 relative rounded-md overflow-hidden bg-muted border border-border shrink-0">
+                <img src={po.image_url} alt={`PO #${po.id}`} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
+                <span className="text-xs text-muted-foreground font-medium">No Img</span>
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Link href={`/purchase-orders/${po.id}`} className="font-medium text-foreground hover:text-accent transition-colors">
+                  Order #{po.id}
+                </Link>
+                <span className="text-muted-foreground font-normal">·</span>
+                <Link href={`/purchase-orders/${po.id}`} className="text-sm font-medium hover:text-accent transition-colors">
+                  {supplierName(po.supplier_id)}
+                </Link>
+              </div>
+              <p className="text-xs text-muted-foreground max-w-sm truncate">
+                {po.description || "No description provided"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Dispatch: {po.dispatch_date || "Pending"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <StatusPill value={po.status} />
+            <div className="flex items-center gap-2">
               {po.status === "draft" && (
-                <EditPOForm po={po} suppliers={suppliers} onSaved={() => setRefreshKey(k => k + 1)} />
+                <>
+                  <ApproveButton poId={po.id} />
+                  <EditPOForm po={po} suppliers={suppliers} onSaved={() => setRefreshKey(k => k + 1)} />
+                </>
               )}
-            </Td>
-            <Td className="text-sm text-muted-foreground">
-              {po.dispatch_date ?? "—"}
-            </Td>
-            <Td>
-              <StatusPill value={po.status} />
-            </Td>
-            <Td className="flex items-center gap-3">
-              {po.status === "draft" && <ApproveButton poId={po.id} />}
-              <Link href={`/purchase-orders/${po.id}`} className="text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100">
-                <ExternalLink size={14} />
+              <Link href={`/purchase-orders/${po.id}`} className="text-muted-foreground hover:text-foreground transition-colors ml-2">
+                <ExternalLink size={16} />
               </Link>
-            </Td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
   );
 }
