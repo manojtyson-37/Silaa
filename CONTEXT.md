@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (perf + styles qty/edit + PO detail/print + fabric edit UX)
+> Last updated: 2026-07-03 (multiple receipts + quick procurement via expenses)
 
 ---
 
@@ -145,7 +145,8 @@ cd backend && source ../.env && alembic upgrade head
 - CSV export (formula-injection sanitized)
 - Category budget tracking: per-category monthly limit, progress bar (red when over)
 - Recurring flag on expenses (↻ icon)
-- Receipt file upload to Supabase storage per expense
+- **Multiple receipt file uploads** to Supabase storage per expense
+- **Quick Procurement UI**: Dynamic inline form for adding multiple fabrics and suppliers on-the-fly when "Procurement" category is selected. Auto-calculates total and creates FabricLot + GRN entries in inventory.
 - Currency setting (₹ INR default, supports USD/EUR/GBP/JPY) — stored server-side in `company_setting` table
 
 ### Current migrations (in order)
@@ -158,6 +159,7 @@ c1a2b3d4e5f6 — icon field on ExpenseCategory
 d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, CompanySetting)
 e2f3a4b5c6d7 — qty (INTEGER DEFAULT 0) on style_variant
 f3a4b5c6d7e8 — description/image_url/dispatch_date/tax_rate/payment_terms on purchase_order
+0c6b1cd7690c — multiple_receipts_quick_procurement
 ```
 
 ---
