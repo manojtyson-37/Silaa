@@ -7,10 +7,10 @@ import { api, FabricItem, Supplier } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
 
-export default function GRNForm({ fabricItems, suppliers }: { fabricItems: FabricItem[]; suppliers: Supplier[] }) {
+export default function GRNForm({ fabricItems, suppliers, preSelectedFabricId }: { fabricItems: FabricItem[]; suppliers: Supplier[]; preSelectedFabricId?: number }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [fabricItemId, setFabricItemId] = useState(fabricItems[0]?.id?.toString() ?? "");
+  const [fabricItemId, setFabricItemId] = useState(preSelectedFabricId?.toString() ?? (fabricItems[0]?.id?.toString() ?? ""));
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id?.toString() ?? "");
   const [poLineId, setPoLineId] = useState("");
   const [receivedQty, setReceivedQty] = useState("");
@@ -55,13 +55,15 @@ export default function GRNForm({ fabricItems, suppliers }: { fabricItems: Fabri
 
   return (
     <Card className="p-4 mb-5 bg-muted/30 flex flex-col gap-3 max-w-xl">
-      <Select value={fabricItemId} onChange={(e) => setFabricItemId(e.target.value)}>
-        {fabricItems.map((it) => (
-          <option key={it.id} value={it.id}>
-            {it.name}
-          </option>
-        ))}
-      </Select>
+      {!preSelectedFabricId && (
+        <Select value={fabricItemId} onChange={(e) => setFabricItemId(e.target.value)}>
+          {fabricItems.map((it) => (
+            <option key={it.id} value={it.id}>
+              {it.name}
+            </option>
+          ))}
+        </Select>
+      )}
       <Select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
         {suppliers.map((s) => (
           <option key={s.id} value={s.id}>
