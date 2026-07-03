@@ -14,6 +14,7 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
     const body = await res.text();
     throw new Error(`${res.status} ${path}: ${body}`);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
