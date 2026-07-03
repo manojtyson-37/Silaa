@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
-import { Card, Table, Th, Td } from "@/components/ui";
+import { Card, Table, Th, Td, Tr } from "@/components/ui";
 import EditFabricItemForm from "./EditFabricItemForm";
 import GRNForm from "./GRNForm";
+import EditLotRow from "./EditLotRow";
 import { Pencil } from "lucide-react";
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 
 export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingLotId, setEditingLotId] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
@@ -81,18 +83,43 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                       <Th>Dye Lot</Th>
                       <Th>Cost / {item.consumption_uom}</Th>
                       <Th>Balance</Th>
+                      <Th>{null}</Th>
                     </tr>
                   </thead>
                   <tbody>
-                    {itemLots.map((lot) => (
-                      <tr key={lot.id}>
-                        <Td className="font-mono text-xs">#{lot.id}</Td>
-                        <Td>{supplierMap.get(lot.supplier_id) || `ID: ${lot.supplier_id}`}</Td>
-                        <Td className="text-muted-foreground">{lot.dye_lot_no ?? "—"}</Td>
-                        <Td>₹{lot.cost_per_uom}</Td>
-                        <Td className="font-medium">{lot.balance}</Td>
-                      </tr>
-                    ))}
+                    {itemLots.map((lot) => {
+                      if (editingLotId === lot.id) {
+                        return (
+                          <EditLotRow
+                            key={lot.id}
+                            lot={lot}
+                            suppliers={suppliers}
+                            onSaved={() => {
+                              setEditingLotId(null);
+                              setRefreshKey((k) => k + 1);
+                            }}
+                            onCancel={() => setEditingLotId(null)}
+                          />
+                        );
+                      }
+                      return (
+                        <Tr key={lot.id}>
+                          <Td className="font-mono text-xs">#{lot.id}</Td>
+                          <Td>{supplierMap.get(lot.supplier_id) || `ID: ${lot.supplier_id}`}</Td>
+                          <Td className="text-muted-foreground">{lot.dye_lot_no ?? "—"}</Td>
+                          <Td>₹{lot.cost_per_uom}</Td>
+                          <Td className="font-medium">{lot.balance}</Td>
+                          <Td className="text-right">
+                            <button
+                              onClick={() => setEditingLotId(lot.id)}
+                              className="text-muted-foreground hover:text-foreground cursor-pointer"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          </Td>
+                        </Tr>
+                      );
+                    })}
                   </tbody>
                 </Table>
               </div>

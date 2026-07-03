@@ -46,6 +46,11 @@ class GRNIn(BaseModel):
     dye_lot_no: Optional[str] = None
     created_by: str
 
+class LotUpdate(BaseModel):
+    supplier_id: int
+    cost_per_uom: Decimal
+    dye_lot_no: Optional[str] = None
+
 
 class LotOut(BaseModel):
     id: int
@@ -139,6 +144,21 @@ def grn(payload: GRNIn, db: Session = Depends(get_db), warehouse_id: int = Depen
         created_by=payload.created_by,
         dye_lot_no=payload.dye_lot_no,
     )
+    return lot
+
+
+@router.patch("/fabric-lots/{lot_id}", response_model=LotOut)
+def update_fabric_lot(lot_id: int, payload: LotUpdate, db: Session = Depends(get_db)):
+    lot = db.get(FabricLot, lot_id)
+    if lot is None:
+        raise HTTPException(404, "FabricLot not found")
+    
+    lot.supplier_id = payload.supplier_id
+    lot.cost_per_uom = payload.cost_per_uom
+    lot.dye_lot_no = payload.dye_lot_no
+
+    db.commit()
+    db.refresh(lot)
     return lot
 
 
