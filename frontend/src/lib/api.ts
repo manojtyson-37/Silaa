@@ -10,6 +10,10 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
       ...(init?.headers ?? {}),
     },
   });
+  if (res.status === 401) {
+    const { redirect } = await import("next/navigation");
+    redirect("/login");
+  }
   if (!res.ok) {
     const body = await res.text();
     let msg = body;
