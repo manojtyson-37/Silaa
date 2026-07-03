@@ -160,6 +160,15 @@ def upsert_setting(key: str, payload: SettingIn, db: Session = Depends(get_db)):
 
 # ── Expenses ─────────────────────────────────────────────────────────────────
 
+class ProcurementItemCreate(BaseModel):
+    fabric_item_id: Optional[int] = None
+    new_fabric_name: Optional[str] = None
+    supplier_id: Optional[int] = None
+    new_supplier_name: Optional[str] = None
+    fabric_qty: Decimal
+    price: Decimal
+
+
 class ExpenseIn(BaseModel):
     category_id: int
     amount: Decimal
@@ -167,8 +176,9 @@ class ExpenseIn(BaseModel):
     description: str
     paid_to: Optional[str] = None
     tags: list[str] = []
-    receipt_url: Optional[str] = None
+    receipt_urls: list[str] = []
     is_recurring: bool = False
+    procurement_items: list[ProcurementItemCreate] = []
 
 
 class ExpenseUpdate(BaseModel):
@@ -178,7 +188,7 @@ class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     paid_to: Optional[str] = None
     tags: Optional[list[str]] = None
-    receipt_url: Optional[str] = None
+    receipt_urls: Optional[list[str]] = None
     is_recurring: Optional[bool] = None
 
 
@@ -190,7 +200,7 @@ class ExpenseOut(BaseModel):
     description: str
     paid_to: Optional[str]
     tags: list[str]
-    receipt_url: Optional[str]
+    receipt_urls: list[str]
     is_recurring: bool
 
 
@@ -213,8 +223,68 @@ def list_expenses(
 def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
     if not db.get(ExpenseCategory, payload.category_id):
         raise HTTPException(404, "Category not found")
-    exp = Expense(**payload.model_dump())
+        
+    data = payload.model_dump(exclude={"procurement_items"})
+    exp = Expense(**data)
     db.add(exp)
+    db.flush()
+    
+    if payload.procurement_items:
+        from app.procurement.models import Supplier
+        from app.fabric_inventory.models import FabricItem, FabricLot, FabricLedgerEntry
+        from app.core.warehouse import Warehouse
+        
+        wh = db.scalar(select(Warehouse).limit(1))
+        warehouse_id = wh.id if wh else 1
+        
+        for item in payload.procurement_items:
+            if item.new_supplier_name:
+                supp = Supplier(name=item.new_supplier_name, type="fabric")
+                db.add(supp)
+                db.flush()
+                supp_id = supp.id
+            elif item.supplier_id:
+                supp_id = item.supplier_id
+            else:
+                raise HTTPException(400, "Must provide supplier_id or new_supplier_name")
+                
+            if item.new_fabric_name:
+                fab = FabricItem(name=item.new_fabric_name, consumption_uom="meter")
+                db.add(fab)
+                db.flush()
+                fab_id = fab.id
+            elif item.fabric_item_id:
+                fab_id = item.fabric_item_id
+            else:
+                raise HTTPException(400, "Must provide fabric_item_id or new_fabric_name")
+                
+            if item.fabric_qty <= 0:
+                raise HTTPException(400, "Quantity must be > 0")
+                
+            cost_per_uom = item.price / item.fabric_qty
+            
+            lot = FabricLot(
+                fabric_item_id=fab_id,
+                supplier_id=supp_id,
+                expense_id=exp.id,
+                received_qty=item.fabric_qty,
+                cost_per_uom=cost_per_uom,
+            )
+            db.add(lot)
+            db.flush()
+            
+            ledger = FabricLedgerEntry(
+                fabric_lot_id=lot.id,
+                warehouse_id=warehouse_id,
+                txn_type="GRN",
+                direction="in",
+                quantity=item.fabric_qty,
+                reference_type="Expense",
+                reference_id=exp.id,
+                created_by="QuickProcurement"
+            )
+            db.add(ledger)
+            
     db.commit()
     db.refresh(exp)
     return exp

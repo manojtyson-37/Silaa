@@ -26,6 +26,7 @@ class FabricLot(Base):
     fabric_item_id: Mapped[int] = mapped_column(ForeignKey("fabric_item.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("supplier.id"), nullable=False)
     po_line_id: Mapped[int] = mapped_column(ForeignKey("purchase_order_line.id"), nullable=True)
+    expense_id: Mapped[int] = mapped_column(ForeignKey("expense.id"), nullable=True)
     dye_lot_no: Mapped[str] = mapped_column(String, nullable=True)  # deferred decision, see Revision 1 Change 1
     received_qty: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
     cost_per_uom: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)  # PO price only

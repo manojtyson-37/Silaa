@@ -176,6 +176,16 @@ export type WastageRejectionReport = {
 export type ExpenseCategory = { id: number; name: string; color: string | null; icon: string | null };
 export type CategoryBudget = { id: number; category_id: number; monthly_limit: string };
 export type CompanySetting = { key: string; value: string };
+
+export type ProcurementItemCreate = {
+  fabric_item_id?: number | null;
+  new_fabric_name?: string | null;
+  supplier_id?: number | null;
+  new_supplier_name?: string | null;
+  fabric_qty: number;
+  price: number;
+};
+
 export type Expense = {
   id: number;
   category_id: number;
@@ -184,6 +194,6 @@ export type Expense = {
   description: string;
   paid_to: string | null;
   tags: string[];
-  receipt_url: string | null;
+  receipt_urls: string[];
   is_recurring: boolean;
 };

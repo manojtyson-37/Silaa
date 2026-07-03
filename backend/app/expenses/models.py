@@ -41,5 +41,5 @@ class Expense(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     paid_to: Mapped[str] = mapped_column(String, nullable=True)
-    receipt_url: Mapped[str] = mapped_column(String, nullable=True)
+    receipt_urls: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

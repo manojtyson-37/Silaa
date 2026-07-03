@@ -5,7 +5,7 @@ import {
   ChevronLeft, ChevronRight, Download, Paperclip, Pencil,
   Plus, RefreshCw, Settings, Trash2, X,
 } from "lucide-react";
-import { api, CategoryBudget, CompanySetting, Expense, ExpenseCategory } from "@/lib/api";
+import { api, CategoryBudget, CompanySetting, Expense, ExpenseCategory, FabricItem, Supplier, ProcurementItemCreate } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select } from "@/components/ui";
 import CategoryEditor, { CategoryDraft } from "./CategoryEditor";
@@ -27,6 +27,8 @@ type Props = {
   expenses: Expense[];
   budgets: CategoryBudget[];
   settings: CompanySetting[];
+  fabricItems: FabricItem[];
+  suppliers: Supplier[];
 };
 
 function fmtYM(ym: string) {
@@ -50,16 +52,16 @@ function sanitizeCSVCell(value: string): string {
 }
 
 function ReceiptControls({
-  url, onFile, onClear, inputRef, uploading,
+  urls, onFile, onClear, inputRef, uploading,
 }: {
-  url: string | null;
+  urls: string[];
   onFile: (f: File) => void;
-  onClear: () => void;
+  onClear: (index: number) => void;
   inputRef: { current: HTMLInputElement | null };
   uploading: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <input
         ref={inputRef}
         type="file"
@@ -74,23 +76,36 @@ function ReceiptControls({
         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50"
       >
         <Paperclip size={11} />
-        {url ? "Receipt ✓" : "Attach receipt"}
+        Attach receipt
       </button>
-      {url && (
-        <button type="button" onClick={onClear} className="text-muted-foreground hover:text-foreground">
-          <X size={11} />
-        </button>
-      )}
+      {urls.map((url, i) => (
+        <div key={i} className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded text-xs text-foreground">
+          <span>Receipt {i + 1} ✓</span>
+          <button type="button" onClick={() => onClear(i)} className="text-muted-foreground hover:text-foreground">
+            <X size={11} />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
+
+type ProcurementFormItem = {
+  fabric_item_id: string;
+  new_fabric_name: string;
+  supplier_id: string;
+  new_supplier_name: string;
+  fabric_qty: string;
+  price: string;
+};
 
 const BLANK_FORM = () => ({
   category_id: "", amount: "",
   expense_date: new Date().toISOString().slice(0, 10),
   description: "", paid_to: "", tags: "",
-  receipt_url: null as string | null,
+  receipt_urls: [] as string[],
   is_recurring: false,
+  procurement_items: [] as ProcurementFormItem[],
 });
 
 export default function ExpenseClient({
@@ -98,6 +113,8 @@ export default function ExpenseClient({
   expenses: initExp,
   budgets: initBudgets,
   settings: initSettings,
+  fabricItems,
+  suppliers,
 }: Props) {
   const [categories, setCategories] = useState(initCats);
   const [expenses, setExpenses] = useState(initExp);
@@ -237,8 +254,8 @@ export default function ExpenseClient({
     setUploading(true);
     try {
       const { url } = await api.upload(file, getClientToken());
-      if (forEdit) setEditExpForm(f => f ? { ...f, receipt_url: url } : f);
-      else setExpForm(f => ({ ...f, receipt_url: url }));
+      if (forEdit) setEditExpForm(f => f ? { ...f, receipt_urls: [...f.receipt_urls, url] } : f);
+      else setExpForm(f => ({ ...f, receipt_urls: [...f.receipt_urls, url] }));
     } catch { setError("Failed to upload receipt."); }
     finally { setUploading(false); }
   };
@@ -248,6 +265,16 @@ export default function ExpenseClient({
   const addExpense = async () => {
     setError(null);
     try {
+      const isProcurement = catById[Number(expForm.category_id)]?.name.toLowerCase() === "procurement";
+      const pItems: ProcurementItemCreate[] = isProcurement ? expForm.procurement_items.map(p => ({
+        fabric_item_id: p.fabric_item_id === "new" ? null : (Number(p.fabric_item_id) || null),
+        new_fabric_name: p.fabric_item_id === "new" ? p.new_fabric_name : null,
+        supplier_id: p.supplier_id === "new" ? null : (Number(p.supplier_id) || null),
+        new_supplier_name: p.supplier_id === "new" ? p.new_supplier_name : null,
+        fabric_qty: parseFloat(p.fabric_qty) || 0,
+        price: parseFloat(p.price) || 0,
+      })) : [];
+
       const payload = {
         category_id: Number(expForm.category_id),
         amount: parseFloat(expForm.amount),
@@ -255,8 +282,9 @@ export default function ExpenseClient({
         description: expForm.description,
         paid_to: expForm.paid_to || null,
         tags: expForm.tags ? expForm.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-        receipt_url: expForm.receipt_url,
+        receipt_urls: expForm.receipt_urls,
         is_recurring: expForm.is_recurring,
+        procurement_items: pItems,
       };
       const exp = await api.post<Expense>("/expenses", payload, getClientToken());
       setExpenses(e => [exp, ...e]);
@@ -282,8 +310,9 @@ export default function ExpenseClient({
       description: exp.description,
       paid_to: exp.paid_to ?? "",
       tags: (exp.tags ?? []).join(", "),
-      receipt_url: exp.receipt_url ?? null,
+      receipt_urls: exp.receipt_urls ?? [],
       is_recurring: exp.is_recurring ?? false,
+      procurement_items: [],
     });
   };
 
@@ -298,7 +327,7 @@ export default function ExpenseClient({
         description: editExpForm.description,
         paid_to: editExpForm.paid_to || null,
         tags: editExpForm.tags ? editExpForm.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-        receipt_url: editExpForm.receipt_url,
+        receipt_urls: editExpForm.receipt_urls,
         is_recurring: editExpForm.is_recurring,
       };
       const updated = await api.patch<Expense>(`/expenses/${id}`, payload, getClientToken());
@@ -311,14 +340,14 @@ export default function ExpenseClient({
   // ── CSV export ─────────────────────────────────────────────────────────────
 
   const exportCSV = () => {
-    const header = ["Date", "Description", "Category", `Amount (${currency})`, "Paid To", "Tags", "Recurring", "Receipt"];
+    const header = ["Date", "Description", "Category", `Amount (${currency})`, "Paid To", "Tags", "Recurring", "Receipts"];
     const rows = filteredExpenses.map(e => [
       e.expense_date, e.description,
       catById[e.category_id]?.name ?? "",
       e.amount, e.paid_to ?? "",
       (e.tags ?? []).join("; "),
       e.is_recurring ? "Yes" : "No",
-      e.receipt_url ?? "",
+      (e.receipt_urls ?? []).join("; "),
     ]);
     const csv = [header, ...rows]
       .map(r => r.map(v => `"${sanitizeCSVCell(String(v)).replace(/"/g, '""')}"`).join(","))
@@ -612,13 +641,113 @@ export default function ExpenseClient({
                 <RefreshCw size={11} /> Recurring monthly
               </label>
               <ReceiptControls
-                url={expForm.receipt_url}
+                urls={expForm.receipt_urls}
                 onFile={f => uploadReceipt(f, false)}
-                onClear={() => setExpForm(f => ({ ...f, receipt_url: null }))}
+                onClear={(i) => setExpForm(f => ({ ...f, receipt_urls: f.receipt_urls.filter((_, idx) => idx !== i) }))}
                 inputRef={receiptRef}
                 uploading={uploading}
               />
             </div>
+            {catById[Number(expForm.category_id)]?.name.toLowerCase() === "procurement" && (
+              <div className="mt-2 flex flex-col gap-2 border-t pt-2">
+                <p className="text-xs font-medium text-foreground">Procurement Items</p>
+                {expForm.procurement_items.map((item, idx) => (
+                  <div key={idx} className="flex flex-col gap-2 p-2 bg-background rounded border text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-medium text-muted-foreground">Item {idx + 1}</span>
+                      <button onClick={() => {
+                        setExpForm(f => {
+                          const newItems = f.procurement_items.filter((_, i) => i !== idx);
+                          const newAmount = newItems.reduce((acc, it) => acc + (parseFloat(it.price) || 0), 0);
+                          return { ...f, procurement_items: newItems, amount: String(newAmount) };
+                        });
+                      }} className="text-muted-foreground hover:text-destructive"><X size={12}/></button>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Select
+                          value={item.fabric_item_id}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setExpForm(f => {
+                              const arr = [...f.procurement_items];
+                              arr[idx].fabric_item_id = val;
+                              return { ...f, procurement_items: arr };
+                            });
+                          }}
+                        >
+                          <option value="">Select Fabric</option>
+                          <option value="new">+ Create New Fabric</option>
+                          {fabricItems.map(fi => <option key={fi.id} value={fi.id}>{fi.name}</option>)}
+                        </Select>
+                        {item.fabric_item_id === "new" && (
+                          <Input className="mt-1" placeholder="New Fabric Name" value={item.new_fabric_name} onChange={e => {
+                            const val = e.target.value;
+                            setExpForm(f => {
+                              const arr = [...f.procurement_items];
+                              arr[idx].new_fabric_name = val;
+                              return { ...f, procurement_items: arr };
+                            });
+                          }} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <Select
+                          value={item.supplier_id}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setExpForm(f => {
+                              const arr = [...f.procurement_items];
+                              arr[idx].supplier_id = val;
+                              return { ...f, procurement_items: arr };
+                            });
+                          }}
+                        >
+                          <option value="">Select Supplier</option>
+                          <option value="new">+ Create New Supplier</option>
+                          {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </Select>
+                        {item.supplier_id === "new" && (
+                          <Input className="mt-1" placeholder="New Supplier Name" value={item.new_supplier_name} onChange={e => {
+                            const val = e.target.value;
+                            setExpForm(f => {
+                              const arr = [...f.procurement_items];
+                              arr[idx].new_supplier_name = val;
+                              return { ...f, procurement_items: arr };
+                            });
+                          }} />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input placeholder="Quantity" value={item.fabric_qty} onChange={e => {
+                        const val = e.target.value;
+                        setExpForm(f => {
+                          const arr = [...f.procurement_items];
+                          arr[idx].fabric_qty = val;
+                          return { ...f, procurement_items: arr };
+                        });
+                      }} />
+                      <Input placeholder="Total Price" value={item.price} onChange={e => {
+                        const val = e.target.value;
+                        setExpForm(f => {
+                          const arr = [...f.procurement_items];
+                          arr[idx].price = val;
+                          const newAmount = arr.reduce((acc, it) => acc + (parseFloat(it.price) || 0), 0);
+                          return { ...f, procurement_items: arr, amount: String(newAmount) };
+                        });
+                      }} />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setExpForm(f => ({ ...f, procurement_items: [...f.procurement_items, { fabric_item_id: "", new_fabric_name: "", supplier_id: "", new_supplier_name: "", fabric_qty: "", price: "" }] }))}
+                  className="text-xs text-accent hover:text-primary mt-1 text-left"
+                >
+                  + Add Item
+                </button>
+              </div>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="flex gap-2 pt-1">
               <Button
@@ -693,9 +822,9 @@ export default function ExpenseClient({
                         <RefreshCw size={11} /> Recurring monthly
                       </label>
                       <ReceiptControls
-                        url={editExpForm.receipt_url}
+                        urls={editExpForm.receipt_urls}
                         onFile={f => uploadReceipt(f, true)}
-                        onClear={() => setEditExpForm(f => f ? { ...f, receipt_url: null } : f)}
+                        onClear={(i) => setEditExpForm(f => f ? { ...f, receipt_urls: f.receipt_urls.filter((_, idx) => idx !== i) } : f)}
                         inputRef={editReceiptRef}
                         uploading={uploading}
                       />
@@ -732,16 +861,17 @@ export default function ExpenseClient({
                       <span className="text-xs text-muted-foreground">{exp.expense_date}</span>
                       {cat && <span className="text-xs text-muted-foreground">· {cat.name}</span>}
                       {exp.paid_to && <span className="text-xs text-muted-foreground">· {exp.paid_to}</span>}
-                      {exp.receipt_url && (
+                      {(exp.receipt_urls || []).map((url, i) => (
                         <a
-                          href={exp.receipt_url}
+                          key={i}
+                          href={url}
                           target="_blank"
                           rel="noreferrer"
                           className="text-xs text-accent hover:text-primary flex items-center gap-0.5"
                         >
-                          <Paperclip size={10} /> Receipt
+                          <Paperclip size={10} /> Receipt {i + 1}
                         </a>
-                      )}
+                      ))}
                       {(exp.tags ?? []).map(t => (
                         <span key={t} className="text-xs bg-muted px-1.5 py-0.5 rounded text-foreground">{t}</span>
                       ))}
