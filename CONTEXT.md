@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (expenses v2 + auth fixes)
+> Last updated: 2026-07-03 (perf + styles qty/edit + PO detail/print + fabric edit UX)
 
 ---
 
@@ -37,17 +37,14 @@ Internal ERP for "Silaa", a clothing-manufacturing brand. Replaces Excel/WhatsAp
 ### Production
 | Layer | Detail |
 |-------|--------|
-| **Frontend** | Vercel, https://silaa-sigma.vercel.app — Root Directory: `frontend`, env var `NEXT_PUBLIC_API_BASE` = Cloudflare tunnel URL |
-| **Backend** | DigitalOcean droplet `jodo-ops-agent`, IP `143.110.183.143`, Docker Compose |
-| **Tunnel** | Cloudflare Quick Tunnel: `https://elections-present-rabbit-too.trycloudflare.com` (**ephemeral** — changes on container restart) |
+| **Frontend** | Vercel, https://silaa-sigma.vercel.app — Root Directory: `frontend`, env var `NEXT_PUBLIC_API_BASE` = `https://silaa-erp.duckdns.org` |
+| **Backend** | DigitalOcean droplet `jodo-ops-agent`, IP `143.110.183.143`, Docker Compose, port 8000 |
+| **HTTPS** | Caddy v2 systemd service on droplet → reverse proxy to localhost:8000. Auto-HTTPS via Let's Encrypt. DuckDNS cron renewal every 5 min. TTFB ~35ms. |
+| **Domain** | `silaa-erp.duckdns.org` — DuckDNS free subdomain, token in droplet env. **Stable across rebuilds** (no tunnel needed). |
 | **Database** | Supabase Postgres, project `nxwiyupkznedqknwquhc`, https://supabase.com/dashboard/project/nxwiyupkznedqknwquhc |
 | **SSH** | `ssh -i ~/.ssh/silaa_deploy root@143.110.183.143` |
 
-### When the tunnel URL changes (after `docker compose up` rebuild):
-1. `docker logs silaa-cloudflared-1 | grep trycloudflare` → get new URL
-2. Update `NEXT_PUBLIC_API_BASE` in Vercel dashboard
-3. Update `FRONTEND_ORIGINS` in `/root/Silaa/.env` on the droplet
-4. `docker compose up -d` to reload
+> **Cloudflare Quick Tunnel removed 2026-07-03.** No longer using `cloudflared`. Caddy+DuckDNS is stable — no URL changes on rebuild.
 
 ### Deploy backend changes:
 ```bash
@@ -111,11 +108,11 @@ cd backend && source ../.env && alembic upgrade head
 
 ### Backend modules (`backend/app/`)
 - `core/` — append-only ledger base, generic balance helper, polymorphic refs, Warehouse
-- `procurement/` — Supplier, PurchaseOrder, partial-receipt logic
+- `procurement/` — Supplier, PurchaseOrder (+ description, image_url, dispatch_date, tax_rate, payment_terms added 2026-07-03), PurchaseOrderLine. `GET /purchase-orders/{id}` returns `PurchaseOrderDetail` with lines. `PATCH /purchase-orders/{id}` accepts new fields (draft-only).
 - `uom/` — UnitOfMeasure + UOMConversion (frozen at write time)
-- `fabric_inventory/` — GRN, issue, adjust, landed costs (concurrency-safe, row lock)
+- `fabric_inventory/` — GRN, issue, adjust, landed costs (concurrency-safe, row lock). `GET /fabric-lots-with-balance` bulk endpoint — balance computed server-side per lot.
 - `accessory_inventory/` — GRN, issue, adjust (backend kept; UI removed per client request)
-- `style_variant/` — Style (grouping only) + StyleVariant (real stock unit)
+- `style_variant/` — Style (grouping only) + StyleVariant (real stock unit, includes `qty` field added 2026-07-03). `GET /styles-with-variants` bulk endpoint (1 IN query, no waterfall). `PATCH /variants/{id}` for inline edit.
 - `bom/` — BOM + BOMVersion + BOMItem (immutable once created)
 - `production/` — ProductionOrder, CuttingRecord, StitchingBatch, 5-state QC, ReworkRecord, audit log
 - `finished_goods/` — FinishedGoodsLedgerEntry, 9 txn_types, cost rollup
@@ -129,14 +126,18 @@ cd backend && source ../.env && alembic upgrade head
 ### Frontend pages (`frontend/src/app/`)
 - `/` — Dashboard (stat cards + recent activity)
 - `/login` — Auth
-- `/styles` — Style variants list
-- `/fabric` — Fabric inventory + GRN
-- `/purchase-orders` — PO list + approve
+- `/styles` — Style cards with variant tables. **Size dropdown** (XS–4XL + waist sizes), **Qty column**, inline pencil edit per row (`EditVariantRow` → `PATCH /variants/{id}`), inline "+ Add variant" form per card (`NewVariantForm`). Data from `/styles-with-variants` bulk endpoint.
+- `/fabric` — Fabric item cards. **Click any card** → full-width edit panel expands below grid (was cramped inline). Lots table with balance from `/fabric-lots-with-balance`.
+- `/purchase-orders` — PO list with Dispatch column. Rows link to detail page.
+- `/purchase-orders/[id]` — **PO detail**: editable when draft (dispatch date, tax%, payment terms dropdown, description textarea, reference photo upload). Line items with subtotal/tax/total breakdown.
+- `/purchase-orders/[id]/print` — **Sales Order PDF**: auto-triggers `window.print()`, styled invoice (SO-XXXX, bill-to, dates, payment terms, notes, line items, totals). "Download PDF" button.
 - `/production` — Production order list
 - `/production/[id]` — Detail with inline cutting/stitching/QC forms (no scroll, no modal)
 - `/sales-orders` — Sales order list + fulfill/cancel + margin
 - `/reports` — Fabric variance + wastage
 - `/expenses` — Full expense tracker (v2)
+
+**All routes have `loading.tsx` skeleton screens** (sidebar stays rendered, content pulses). Global `error.tsx` error boundary with "Try again" button. `api.ts` 401 → auto-redirect to `/login`.
 
 ### Expenses v2 features (added 2026-07-03)
 - 3-card summary: Total This Month · Top Category · vs Last Month %
@@ -155,6 +156,8 @@ b61d80ea9706 — initial schema (all core modules)
 afaa38bf4300 — image URLs + expenses v1 (ExpenseCategory, Expense)
 c1a2b3d4e5f6 — icon field on ExpenseCategory
 d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, CompanySetting)
+e2f3a4b5c6d7 — qty (INTEGER DEFAULT 0) on style_variant
+f3a4b5c6d7e8 — description/image_url/dispatch_date/tax_rate/payment_terms on purchase_order
 ```
 
 ---
@@ -176,7 +179,7 @@ d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, Company
 
 ---
 
-## Critical Bugs Fixed This Session (2026-07-03)
+## Critical Bugs Fixed (2026-07-03)
 
 | Commit | Fix |
 |--------|-----|
@@ -184,6 +187,8 @@ d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, Company
 | `35ee45d` | `api.ts` — handle 204 No Content; `res.json()` on empty DELETE response threw "Unexpected end of JSON input", breaking ALL deletes |
 | `c49e7d2` | `ExpenseClient.tsx` — surface server error message on category delete (was generic string) |
 | `02aac25` | `api.ts` — parse FastAPI `{"detail":"..."}` JSON error bodies; `ExpenseClient.tsx` — silently remove 404 categories from local state |
+| `b50db51` | `api.ts` — `if (res.status === 401) redirect("/login")` in request(); 401 from expired token was crashing Server Components into error boundary instead of redirecting |
+| `2617b57` | `StylesClient.tsx` — empty `<Th>` needs non-empty children for TS; build was failing on Vercel |
 
 ---
 
@@ -194,10 +199,10 @@ d1e2f3a4b5c6 — expenses v2 (receipt_url, is_recurring, CategoryBudget, Company
 - Fix (deployed): `requireAuth()` in `frontend/src/lib/serverAuth.ts` now checks expiry and redirects to `/login` gracefully.
 - After any Docker rebuild on droplet, existing tokens ARE still valid (key is stable in `.env`).
 
-### Cloudflare tunnel URL is ephemeral
-- Every `docker compose up --build` (full rebuild) MAY change the tunnel URL.
-- Check with: `docker logs silaa-cloudflared-1 | grep trycloudflare`
-- Must update Vercel env var AND droplet `.env` FRONTEND_ORIGINS if it changes.
+### ~~Cloudflare tunnel URL is ephemeral~~ — RESOLVED
+- Replaced with Caddy + DuckDNS on 2026-07-03. URL `silaa-erp.duckdns.org` is stable across rebuilds.
+- `NEXT_PUBLIC_API_BASE` in Vercel = `https://silaa-erp.duckdns.org` (permanent).
+- `FRONTEND_ORIGINS` in droplet `.env` = `https://silaa-sigma.vercel.app` (permanent).
 
 ### Alembic hits SQLite by default
 - Always `source .env` before running alembic to target Supabase.
