@@ -163,6 +163,9 @@ def upsert_setting(key: str, payload: SettingIn, db: Session = Depends(get_db)):
 class ProcurementItemCreate(BaseModel):
     fabric_item_id: Optional[int] = None
     new_fabric_name: Optional[str] = None
+    new_fabric_composition: Optional[str] = None
+    new_fabric_gsm: Optional[int] = None
+    new_fabric_width: Optional[Decimal] = None
     supplier_id: Optional[int] = None
     new_supplier_name: Optional[str] = None
     fabric_qty: Decimal
@@ -249,7 +252,13 @@ def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
                 raise HTTPException(400, "Must provide supplier_id or new_supplier_name")
                 
             if item.new_fabric_name:
-                fab = FabricItem(name=item.new_fabric_name, consumption_uom="meter")
+                fab = FabricItem(
+                    name=item.new_fabric_name,
+                    composition=item.new_fabric_composition,
+                    gsm=item.new_fabric_gsm,
+                    width=item.new_fabric_width,
+                    consumption_uom="meter"
+                )
                 db.add(fab)
                 db.flush()
                 fab_id = fab.id
@@ -309,5 +318,25 @@ def delete_expense(id: int, db: Session = Depends(get_db)):
     exp = db.get(Expense, id)
     if not exp:
         raise HTTPException(404, "Expense not found")
+        
+    # Check for linked fabric lots
+    from app.fabric_inventory.models import FabricLot, FabricLedgerEntry
+    from sqlalchemy import select, func
+    
+    lots = db.scalars(select(FabricLot).where(FabricLot.expense_id == id)).all()
+    for lot in lots:
+        # Check if lot has been consumed (any ledger entries other than the initial GRN)
+        ledger_count = db.scalar(
+            select(func.count())
+            .select_from(FabricLedgerEntry)
+            .where(FabricLedgerEntry.fabric_lot_id == lot.id)
+        )
+        if ledger_count > 1:
+            raise HTTPException(409, "Cannot delete expense: The received fabric has already been consumed in production.")
+            
+        # Delete the GRN ledger entry
+        db.execute(FabricLedgerEntry.__table__.delete().where(FabricLedgerEntry.fabric_lot_id == lot.id))
+        db.delete(lot)
+        
     db.delete(exp)
     db.commit()

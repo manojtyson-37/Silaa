@@ -93,6 +93,9 @@ function ReceiptControls({
 type ProcurementFormItem = {
   fabric_item_id: string;
   new_fabric_name: string;
+  new_fabric_composition: string;
+  new_fabric_gsm: string;
+  new_fabric_width: string;
   supplier_id: string;
   new_supplier_name: string;
   fabric_qty: string;
@@ -269,6 +272,9 @@ export default function ExpenseClient({
       const pItems: ProcurementItemCreate[] = isProcurement ? expForm.procurement_items.map(p => ({
         fabric_item_id: p.fabric_item_id === "new" ? null : (Number(p.fabric_item_id) || null),
         new_fabric_name: p.fabric_item_id === "new" ? p.new_fabric_name : null,
+        new_fabric_composition: p.fabric_item_id === "new" ? p.new_fabric_composition || null : null,
+        new_fabric_gsm: p.fabric_item_id === "new" ? (parseInt(p.new_fabric_gsm) || null) : null,
+        new_fabric_width: p.fabric_item_id === "new" ? (parseFloat(p.new_fabric_width) || null) : null,
         supplier_id: p.supplier_id === "new" ? null : (Number(p.supplier_id) || null),
         new_supplier_name: p.supplier_id === "new" ? p.new_supplier_name : null,
         fabric_qty: parseFloat(p.fabric_qty) || 0,
@@ -293,12 +299,23 @@ export default function ExpenseClient({
     } catch { setError("Failed to add expense."); }
   };
 
-  const deleteExpense = async (id: number) => {
+  const deleteExpense = async (exp: Expense) => {
+    if (catById[exp.category_id]?.name.toLowerCase() === "procurement") {
+      if (!window.confirm("Warning: This expense includes fabric procurement. Deleting it will also permanently remove the received fabric lots from your inventory. Are you sure you want to proceed?")) {
+        return;
+      }
+    }
     setError(null);
     try {
-      await api.delete(`/expenses/${id}`, getClientToken());
-      setExpenses(e => e.filter(x => x.id !== id));
-    } catch { setError("Failed to delete expense."); }
+      await api.delete(`/expenses/${exp.id}`, getClientToken());
+      setExpenses(e => e.filter(x => x.id !== exp.id));
+    } catch (e: any) {
+      if (e.message && e.message.includes("409")) {
+        setError("Cannot delete expense: The received fabric has already been consumed in production.");
+      } else {
+        setError("Failed to delete expense.");
+      }
+    }
   };
 
   const startEditExpense = (exp: Expense) => {
@@ -681,14 +698,42 @@ export default function ExpenseClient({
                           {fabricItems.map(fi => <option key={fi.id} value={fi.id}>{fi.name}</option>)}
                         </Select>
                         {item.fabric_item_id === "new" && (
-                          <Input className="mt-1" placeholder="New Fabric Name" value={item.new_fabric_name} onChange={e => {
-                            const val = e.target.value;
-                            setExpForm(f => {
-                              const arr = [...f.procurement_items];
-                              arr[idx].new_fabric_name = val;
-                              return { ...f, procurement_items: arr };
-                            });
-                          }} />
+                          <div className="flex flex-col gap-2 mt-2">
+                            <Input placeholder="New Fabric Name *" value={item.new_fabric_name} onChange={e => {
+                              const val = e.target.value;
+                              setExpForm(f => {
+                                const arr = [...f.procurement_items];
+                                arr[idx].new_fabric_name = val;
+                                return { ...f, procurement_items: arr };
+                              });
+                            }} />
+                            <div className="flex gap-2">
+                              <Input placeholder="Composition (e.g. 100% Cotton)" value={item.new_fabric_composition} onChange={e => {
+                                const val = e.target.value;
+                                setExpForm(f => {
+                                  const arr = [...f.procurement_items];
+                                  arr[idx].new_fabric_composition = val;
+                                  return { ...f, procurement_items: arr };
+                                });
+                              }} />
+                              <Input placeholder="GSM" value={item.new_fabric_gsm} onChange={e => {
+                                const val = e.target.value;
+                                setExpForm(f => {
+                                  const arr = [...f.procurement_items];
+                                  arr[idx].new_fabric_gsm = val;
+                                  return { ...f, procurement_items: arr };
+                                });
+                              }} />
+                              <Input placeholder="Width (m)" value={item.new_fabric_width} onChange={e => {
+                                const val = e.target.value;
+                                setExpForm(f => {
+                                  const arr = [...f.procurement_items];
+                                  arr[idx].new_fabric_width = val;
+                                  return { ...f, procurement_items: arr };
+                                });
+                              }} />
+                            </div>
+                          </div>
                         )}
                       </div>
                       <div className="flex-1">
@@ -741,7 +786,7 @@ export default function ExpenseClient({
                   </div>
                 ))}
                 <button
-                  onClick={() => setExpForm(f => ({ ...f, procurement_items: [...f.procurement_items, { fabric_item_id: "", new_fabric_name: "", supplier_id: "", new_supplier_name: "", fabric_qty: "", price: "" }] }))}
+                  onClick={() => setExpForm(f => ({ ...f, procurement_items: [...f.procurement_items, { fabric_item_id: "", new_fabric_name: "", new_fabric_composition: "", new_fabric_gsm: "", new_fabric_width: "", supplier_id: "", new_supplier_name: "", fabric_qty: "", price: "" }] }))}
                   className="text-xs text-accent hover:text-primary mt-1 text-left"
                 >
                   + Add Item
@@ -883,7 +928,7 @@ export default function ExpenseClient({
                       className="text-muted-foreground hover:text-foreground cursor-pointer"
                     ><Pencil size={14} /></button>
                     <button
-                      onClick={() => deleteExpense(exp.id)}
+                      onClick={() => deleteExpense(exp)}
                       className="text-muted-foreground hover:text-destructive cursor-pointer"
                     ><Trash2 size={14} /></button>
                   </div>
