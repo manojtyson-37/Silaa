@@ -104,6 +104,18 @@ def update_fabric_item(item_id: int, payload: FabricItemUpdate, db: Session = De
     return item
 
 
+@router.delete("/fabric-items/{item_id}", status_code=204)
+def delete_fabric_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.get(FabricItem, item_id)
+    if item is None:
+        raise HTTPException(404, "FabricItem not found")
+    lots = db.query(FabricLot).filter_by(fabric_item_id=item_id).count()
+    if lots > 0:
+        raise HTTPException(409, "Cannot delete fabric item that has associated lots. Delete the lots first.")
+    db.delete(item)
+    db.commit()
+
+
 @router.get("/fabric-lots", response_model=list[LotOut])
 def list_fabric_lots(db: Session = Depends(get_db)):
     return db.query(FabricLot).all()
@@ -160,6 +172,18 @@ def update_fabric_lot(lot_id: int, payload: LotUpdate, db: Session = Depends(get
     db.commit()
     db.refresh(lot)
     return lot
+
+
+@router.delete("/fabric-lots/{lot_id}", status_code=204)
+def delete_fabric_lot(lot_id: int, db: Session = Depends(get_db), warehouse_id: int = Depends(get_default_warehouse_id)):
+    lot = db.get(FabricLot, lot_id)
+    if lot is None:
+        raise HTTPException(404, "FabricLot not found")
+    balance = fabric_balance(db, lot_id, warehouse_id)
+    if balance != Decimal("0"):
+        raise HTTPException(409, f"Cannot delete lot with non-zero balance ({balance}). Adjust stock to zero first.")
+    db.delete(lot)
+    db.commit()
 
 
 @router.get("/fabric-lots/{lot_id}/balance")

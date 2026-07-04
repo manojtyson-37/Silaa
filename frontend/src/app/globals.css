@@ -28,25 +28,6 @@
   --color-destructive: #ef4444;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: #f8fafc;
-    --color-on-primary: #0f172a;
-    --color-secondary: #94a3b8;
-    --color-accent: #6366f1;
-    --color-background: #0f172a;
-    --color-surface: #1e293b;
-    --color-foreground: #f8fafc;
-    --color-muted: #334155;
-    --color-muted-foreground: #94a3b8;
-    --color-border: #334155;
-    --color-ring: #475569;
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-destructive: #ef4444;
-  }
-}
-
 @theme inline {
   --color-primary: var(--color-primary);
   --color-on-primary: var(--color-on-primary);

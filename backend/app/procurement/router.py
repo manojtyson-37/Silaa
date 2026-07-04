@@ -145,7 +145,7 @@ def update_purchase_order(po_id: int, payload: PurchaseOrderUpdate, db: Session 
     )
 
 
-@router.patch("/purchase-orders/{po_id}/approve", response_model=PurchaseOrderOut)
+@router.patch(\"/purchase-orders/{po_id}/approve\", response_model=PurchaseOrderOut)
 def approve_purchase_order(po_id: int, db: Session = Depends(get_db)):
     po = db.get(PurchaseOrder, po_id)
     if po is None:
@@ -159,6 +159,20 @@ def approve_purchase_order(po_id: int, db: Session = Depends(get_db)):
         description=po.description, image_url=po.image_url,
         dispatch_date=po.dispatch_date, tax_rate=po.tax_rate, payment_terms=po.payment_terms,
     )
+
+
+@router.delete("/purchase-orders/{po_id}", status_code=204)
+def delete_purchase_order(po_id: int, db: Session = Depends(get_db)):
+    po = db.get(PurchaseOrder, po_id)
+    if po is None:
+        raise HTTPException(404, "PurchaseOrder not found")
+    if po.status != POStatus.DRAFT.value:
+        raise HTTPException(400, "Only draft purchase orders can be deleted.")
+    lines = db.query(PurchaseOrderLine).filter_by(po_id=po_id).all()
+    for line in lines:
+        db.delete(line)
+    db.delete(po)
+    db.commit()
 
 
 @router.get("/purchase-order-lines/{line_id}/outstanding")

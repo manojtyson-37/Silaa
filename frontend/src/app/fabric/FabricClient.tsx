@@ -6,7 +6,8 @@ import { Card, Table, Th, Td, Tr } from "@/components/ui";
 import EditFabricItemForm from "./EditFabricItemForm";
 import GRNForm from "./GRNForm";
 import EditLotRow from "./EditLotRow";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { getClientToken } from "@/lib/clientAuth";
 
 type Props = {
   fabricItems: FabricItem[];
@@ -74,6 +75,23 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                         <Pencil size={14} />
                       </button>
                     )}
+                    {!isEditing && itemLots.length === 0 && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+                          try {
+                            await api.delete(`/fabric-items/${item.id}`, getClientToken());
+                            setRefreshKey(k => k + 1);
+                          } catch (err) {
+                            alert(String(err));
+                          }
+                        }}
+                        className="text-muted-foreground hover:text-destructive cursor-pointer"
+                        title="Delete item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Total Stock</p>
@@ -133,12 +151,30 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                           <Td>₹{lot.cost_per_uom}</Td>
                           <Td className="font-medium">{lot.balance}</Td>
                           <Td className="text-right">
-                            <button
-                              onClick={() => setEditingLotId(lot.id)}
-                              className="text-muted-foreground hover:text-foreground cursor-pointer"
-                            >
-                              <Pencil size={14} />
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => setEditingLotId(lot.id)}
+                                className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                title="Edit lot"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm(`Delete Lot #${lot.id}? This cannot be undone.`)) return;
+                                  try {
+                                    await api.delete(`/fabric-lots/${lot.id}`, getClientToken());
+                                    setRefreshKey(k => k + 1);
+                                  } catch (err) {
+                                    alert(String(err));
+                                  }
+                                }}
+                                className="text-muted-foreground hover:text-destructive cursor-pointer"
+                                title="Delete lot"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </Td>
                         </Tr>
                       );

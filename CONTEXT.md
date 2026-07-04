@@ -2,7 +2,7 @@
 
 > **This file is the single source of truth for any AI agent resuming work on this project.**
 > It lives in git and must be updated after every significant change.
-> Last updated: 2026-07-03 (Fabric inventory UI hierarchical redesign)
+> Last updated: 2026-07-04 (dark mode fix, delete endpoints for Fabric and PO, delete buttons in UI)
 
 ---
 
@@ -108,9 +108,9 @@ cd backend && source ../.env && alembic upgrade head
 
 ### Backend modules (`backend/app/`)
 - `core/` — append-only ledger base, generic balance helper, polymorphic refs, Warehouse
-- `procurement/` — Supplier, PurchaseOrder (+ description, image_url, dispatch_date, tax_rate, payment_terms added 2026-07-03), PurchaseOrderLine. `GET /purchase-orders/{id}` returns `PurchaseOrderDetail` with lines. `PATCH /purchase-orders/{id}` accepts new fields (draft-only).
+- `procurement/` — Supplier, PurchaseOrder (+ description, image_url, dispatch_date, tax_rate, payment_terms added 2026-07-03), PurchaseOrderLine. `GET /purchase-orders/{id}` returns `PurchaseOrderDetail` with lines. `PATCH /purchase-orders/{id}` accepts new fields (draft-only). `DELETE /purchase-orders/{id}` — draft-only, cascades to delete lines.
 - `uom/` — UnitOfMeasure + UOMConversion (frozen at write time)
-- `fabric_inventory/` — GRN, issue, adjust, landed costs (concurrency-safe, row lock). `GET /fabric-lots-with-balance` bulk endpoint — balance computed server-side per lot.
+- `fabric_inventory/` — GRN, issue, adjust, landed costs (concurrency-safe, row lock). `GET /fabric-lots-with-balance` bulk endpoint — balance computed server-side per lot. `DELETE /fabric-items/{id}` — only if no lots exist. `DELETE /fabric-lots/{id}` — only if balance is zero.
 - `accessory_inventory/` — GRN, issue, adjust (backend kept; UI removed per client request)
 - `style_variant/` — Style (grouping only) + StyleVariant (real stock unit, includes `qty` field added 2026-07-03). `GET /styles-with-variants` bulk endpoint (1 IN query, no waterfall). `PATCH /variants/{id}` for inline edit.
 - `bom/` — BOM + BOMVersion + BOMItem (immutable once created)
@@ -128,8 +128,8 @@ cd backend && source ../.env && alembic upgrade head
 - `/` — Dashboard (stat cards + recent activity)
 - `/login` — Auth
 - `/styles` — Style cards with variant tables. **Size dropdown** (XS–4XL + waist sizes), **Qty column**, inline pencil edit per row (`EditVariantRow` → `PATCH /variants/{id}`), inline "+ Add variant" form per card (`NewVariantForm`). Data from `/styles-with-variants` bulk endpoint.
-- `/fabric` — Hierarchical dashboard view. Fabric items display as expansive cards containing total stock balance, metadata, and an inline `+ Add Stock (GRN)` form. Each card houses a nested table of its specific `FabricLot`s (showing Supplier, Cost, Dye Lot, Balance). Data from `/fabric-items`, `/suppliers`, and `/fabric-lots-with-balance`.
-- `/purchase-orders` — PO list with Dispatch column. Rows link to detail page.
+- `/fabric` — Hierarchical dashboard view. Fabric items display as expansive cards containing total stock balance, metadata, and an inline `+ Add Stock (GRN)` form. Each card houses a nested table of its specific `FabricLot`s. Edit buttons on items and lots. **Delete button on items** (only shown when 0 lots). **Delete button on lots** (confirms before deleting, blocked if balance > 0). Data from `/fabric-items`, `/suppliers`, and `/fabric-lots-with-balance`.
+- `/purchase-orders` — PO list with Dispatch column and card layout. Edit (draft only) + **Delete (draft only, with confirmation dialog)** + link to detail.
 - `/purchase-orders/[id]` — **PO detail**: editable when draft (dispatch date, tax%, payment terms dropdown, description textarea, reference photo upload). Line items with subtotal/tax/total breakdown.
 - `/purchase-orders/[id]/print` — **Sales Order PDF**: auto-triggers `window.print()`, styled invoice (SO-XXXX, bill-to, dates, payment terms, notes, line items, totals). "Download PDF" button.
 - `/production` — Production order list
@@ -181,7 +181,7 @@ f3a4b5c6d7e8 — description/image_url/dispatch_date/tax_rate/payment_terms on p
 2. **No raw HTML color pickers.** Use curated icon grid + 8 preset color swatches.
 3. **Fabric width in METERS** — not cm, not inches. Client confirmed. Never override.
 4. **Template-first.** Every module must be configurable, no hard-coded business assumptions. This will be white-labelled.
-5. **Forced light mode.** `color-scheme: light` in globals. Never invert.
+5. **Forced light mode.** Removed `@media (prefers-color-scheme: dark)` block from `globals.css`. `color-scheme: light` in html is NOT sufficient to suppress @media queries — it only affects browser native controls. Removing the block ensures white background regardless of OS dark mode preference.
 
 ---
 

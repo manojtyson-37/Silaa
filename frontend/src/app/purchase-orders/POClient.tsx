@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
-import { PurchaseOrder, Supplier } from "@/lib/api";
+import { ExternalLink, Trash2 } from "lucide-react";
+import { PurchaseOrder, Supplier, api } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
+import { getClientToken } from "@/lib/clientAuth";
 import ApproveButton from "./ApproveButton";
 import EditPOForm from "./EditPOForm";
 
@@ -56,6 +57,21 @@ export default function POClient({ orders, suppliers }: Props) {
                 <>
                   <ApproveButton poId={po.id} />
                   <EditPOForm po={po} suppliers={suppliers} onSaved={() => setRefreshKey(k => k + 1)} />
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Delete Order #${po.id}? This cannot be undone.`)) return;
+                      try {
+                        await api.delete(`/purchase-orders/${po.id}`, getClientToken());
+                        setRefreshKey(k => k + 1);
+                      } catch (err) {
+                        alert(String(err));
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
+                    title="Delete order"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </>
               )}
               <Link href={`/purchase-orders/${po.id}`} className="text-muted-foreground hover:text-foreground transition-colors ml-2">
