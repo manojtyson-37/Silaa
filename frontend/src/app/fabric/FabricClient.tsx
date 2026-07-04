@@ -78,8 +78,11 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                     {!isEditing && (
                       <button
                         onClick={async () => {
-                          if (itemLots.length > 0) return;
-                          if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+                          let msg = `Delete "${item.name}"? This cannot be undone.`;
+                          if (itemLots.length > 0) {
+                              msg = `WARNING: "${item.name}" has ${itemLots.length} lot(s). Deleting it will permanently cascade and delete all associated inventory lots, stock ledgers, and landed costs! Are you absolutely sure?`;
+                          }
+                          if (!confirm(msg)) return;
                           try {
                             await api.delete(`/fabric-items/${item.id}`, getClientToken());
                             setRefreshKey(k => k + 1);
@@ -87,9 +90,8 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                             alert(String(err));
                           }
                         }}
-                        className={`transition-colors ${itemLots.length > 0 ? 'text-muted-foreground/30 cursor-not-allowed' : 'text-muted-foreground hover:text-destructive cursor-pointer'}`}
-                        title={itemLots.length > 0 ? "Cannot delete fabric that has inventory lots" : "Delete item"}
-                        disabled={itemLots.length > 0}
+                        className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
+                        title={itemLots.length > 0 ? "Delete item (Warning: Cascades to lots)" : "Delete item"}
                       >
                         <Trash2 size={14} />
                       </button>

@@ -61,8 +61,11 @@ export default function POClient({ orders, suppliers }: Props) {
               )}
               <button
                 onClick={async () => {
-                  if (po.status !== "draft") return;
-                  if (!confirm(`Delete Order #${po.id}? This cannot be undone.`)) return;
+                  let msg = `Delete Order #${po.id}? This cannot be undone.`;
+                  if (po.status !== "draft") {
+                      msg = `WARNING: Order #${po.id} is ${po.status}. Deleting it will also delete all of its line items. Any inventory already received against it will lose its PO reference. Are you absolutely sure?`;
+                  }
+                  if (!confirm(msg)) return;
                   try {
                     await api.delete(`/purchase-orders/${po.id}`, getClientToken());
                     setRefreshKey(k => k + 1);
@@ -70,9 +73,8 @@ export default function POClient({ orders, suppliers }: Props) {
                     alert(String(err));
                   }
                 }}
-                className={`transition-colors ${po.status !== "draft" ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive cursor-pointer"}`}
-                title={po.status !== "draft" ? "Cannot delete approved purchase order" : "Delete order"}
-                disabled={po.status !== "draft"}
+                className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
+                title={po.status !== "draft" ? "Delete order (Warning: Destructive)" : "Delete order"}
               >
                 <Trash2 size={15} />
               </button>
