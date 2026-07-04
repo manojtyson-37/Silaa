@@ -57,23 +57,25 @@ export default function POClient({ orders, suppliers }: Props) {
                 <>
                   <ApproveButton poId={po.id} />
                   <EditPOForm po={po} suppliers={suppliers} onSaved={() => setRefreshKey(k => k + 1)} />
-                  <button
-                    onClick={async () => {
-                      if (!confirm(`Delete Order #${po.id}? This cannot be undone.`)) return;
-                      try {
-                        await api.delete(`/purchase-orders/${po.id}`, getClientToken());
-                        setRefreshKey(k => k + 1);
-                      } catch (err) {
-                        alert(String(err));
-                      }
-                    }}
-                    className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
-                    title="Delete order"
-                  >
-                    <Trash2 size={15} />
-                  </button>
                 </>
               )}
+              <button
+                onClick={async () => {
+                  if (po.status !== "draft") return;
+                  if (!confirm(`Delete Order #${po.id}? This cannot be undone.`)) return;
+                  try {
+                    await api.delete(`/purchase-orders/${po.id}`, getClientToken());
+                    setRefreshKey(k => k + 1);
+                  } catch (err) {
+                    alert(String(err));
+                  }
+                }}
+                className={`transition-colors ${po.status !== "draft" ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive cursor-pointer"}`}
+                title={po.status !== "draft" ? "Cannot delete approved purchase order" : "Delete order"}
+                disabled={po.status !== "draft"}
+              >
+                <Trash2 size={15} />
+              </button>
               <Link href={`/purchase-orders/${po.id}`} className="text-muted-foreground hover:text-foreground transition-colors ml-2">
                 <ExternalLink size={16} />
               </Link>

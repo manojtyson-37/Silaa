@@ -75,9 +75,10 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                         <Pencil size={14} />
                       </button>
                     )}
-                    {!isEditing && itemLots.length === 0 && (
+                    {!isEditing && (
                       <button
                         onClick={async () => {
+                          if (itemLots.length > 0) return;
                           if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
                           try {
                             await api.delete(`/fabric-items/${item.id}`, getClientToken());
@@ -86,8 +87,9 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                             alert(String(err));
                           }
                         }}
-                        className="text-muted-foreground hover:text-destructive cursor-pointer"
-                        title="Delete item"
+                        className={`transition-colors ${itemLots.length > 0 ? 'text-muted-foreground/30 cursor-not-allowed' : 'text-muted-foreground hover:text-destructive cursor-pointer'}`}
+                        title={itemLots.length > 0 ? "Cannot delete fabric that has inventory lots" : "Delete item"}
+                        disabled={itemLots.length > 0}
                       >
                         <Trash2 size={14} />
                       </button>
