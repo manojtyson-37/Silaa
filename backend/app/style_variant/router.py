@@ -134,3 +134,29 @@ def update_style(style_id: int, payload: StyleUpdate, db: Session = Depends(get_
         setattr(style, k, v)
     db.commit()
     return style
+
+@router.delete("/styles/{style_id}", status_code=204)
+def delete_style(style_id: int, db: Session = Depends(get_db)):
+    from app.bom.models import BOMItem
+    from app.production.models import ProductionOrder
+    
+    style = db.get(Style, style_id)
+    if style is None:
+        raise HTTPException(404, "Style not found")
+        
+    po_count = db.query(ProductionOrder).filter_by(style_id=style_id).count()
+    if po_count > 0:
+        raise HTTPException(409, "Cannot delete style that has production orders.")
+        
+    db.query(StyleVariant).filter_by(style_id=style_id).delete()
+    db.query(BOMItem).filter_by(style_id=style_id).delete()
+    db.delete(style)
+    db.commit()
+
+@router.delete("/variants/{variant_id}", status_code=204)
+def delete_variant(variant_id: int, db: Session = Depends(get_db)):
+    variant = db.get(StyleVariant, variant_id)
+    if variant is None:
+        raise HTTPException(404, "Variant not found")
+    db.delete(variant)
+    db.commit()

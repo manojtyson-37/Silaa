@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, StyleVariant } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
@@ -40,12 +40,30 @@ export default function EditVariantRow({ v }: { v: StyleVariant }) {
         <td className="py-3 px-4 text-sm text-foreground tabular-nums">{v.qty ?? 0}</td>
         <td className="py-3 px-4"><StatusPill value={v.status} /></td>
         <td className="py-3 px-4 text-right">
-          <button
-            onClick={() => setEditing(true)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted text-muted-foreground"
-          >
-            <Pencil size={13} />
-          </button>
+          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setEditing(true)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground"
+              title="Edit variant"
+            >
+              <Pencil size={13} />
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirm(`Delete variant ${v.sku_code}? This cannot be undone.`)) return;
+                try {
+                  await api.delete(`/variants/${v.id}`, getClientToken());
+                  router.refresh();
+                } catch (err) {
+                  alert(String(err));
+                }
+              }}
+              className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600"
+              title="Delete variant"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
         </td>
       </tr>
     );
