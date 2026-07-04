@@ -145,7 +145,7 @@ def update_purchase_order(po_id: int, payload: PurchaseOrderUpdate, db: Session 
     )
 
 
-@router.patch(\"/purchase-orders/{po_id}/approve\", response_model=PurchaseOrderOut)
+@router.patch("/purchase-orders/{po_id}/approve", response_model=PurchaseOrderOut)
 def approve_purchase_order(po_id: int, db: Session = Depends(get_db)):
     po = db.get(PurchaseOrder, po_id)
     if po is None:
