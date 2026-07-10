@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_default_warehouse_id
@@ -19,6 +19,7 @@ class SalesOrderLineIn(BaseModel):
     variant_id: int
     qty: Decimal
     unit_price: Decimal
+    gst_percent: Decimal = Field(Decimal("5"), ge=0, le=100)
 
 
 class SalesOrderIn(BaseModel):
@@ -74,7 +75,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         "customer_address": order.customer_address,
         "status": order.status,
         "lines": [
-            {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price}
+            {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price, "gst_percent": l.gst_percent}
             for l in lines
         ],
     }
@@ -91,6 +92,18 @@ def update_sales_order(order_id: int, payload: SalesOrderUpdate, db: Session = D
         setattr(order, k, v)
     db.commit()
     return order
+
+
+@router.delete("/sales-orders/{order_id}", status_code=204)
+def delete_sales_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    if order.status != SalesOrderStatus.DRAFT.value:
+        raise HTTPException(400, "Can only delete a SalesOrder in DRAFT status")
+    db.query(SalesOrderLine).filter_by(sales_order_id=order_id).delete()
+    db.delete(order)
+    db.commit()
 
 
 @router.post("/sales-orders/{order_id}/fulfill", response_model=SalesOrderOut)

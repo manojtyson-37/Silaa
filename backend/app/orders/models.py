@@ -37,3 +37,4 @@ class SalesOrderLine(Base):
     variant_id: Mapped[int] = mapped_column(ForeignKey("style_variant.id"), nullable=False)
     qty: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    gst_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, server_default="5")

@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.deps import RequireRole
 from app.db import get_db
 from app.expenses.models import CategoryBudget, CompanySetting, Expense, ExpenseCategory
 
@@ -140,10 +141,10 @@ def list_settings(db: Session = Depends(get_db)):
     return db.scalars(select(CompanySetting)).all()
 
 
-_ALLOWED_SETTING_KEYS = {"currency"}
+_ALLOWED_SETTING_KEYS = {"currency", "gstin", "business_address"}
 
 
-@router.patch("/company-settings/{key}", response_model=SettingOut)
+@router.patch("/company-settings/{key}", response_model=SettingOut, dependencies=[Depends(RequireRole(["admin"]))])
 def upsert_setting(key: str, payload: SettingIn, db: Session = Depends(get_db)):
     if key not in _ALLOWED_SETTING_KEYS:
         raise HTTPException(400, f"Unknown setting key: {key}")

@@ -7,9 +7,9 @@ import { api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input } from "@/components/ui";
 
-type Line = { variant_id: string; qty: string; unit_price: string };
+type Line = { variant_id: string; qty: string; unit_price: string; gst_percent: string };
 
-const emptyLine = (): Line => ({ variant_id: "", qty: "", unit_price: "" });
+const emptyLine = (): Line => ({ variant_id: "", qty: "", unit_price: "", gst_percent: "5" });
 
 export default function NewSalesOrderForm() {
   const router = useRouter();
@@ -34,6 +34,7 @@ export default function NewSalesOrderForm() {
           variant_id: Number(l.variant_id),
           qty: l.qty,
           unit_price: l.unit_price,
+          gst_percent: l.gst_percent || "5",
         })),
         created_by: "web",
       }, getClientToken());
@@ -84,6 +85,12 @@ export default function NewSalesOrderForm() {
             className="w-28 shrink-0"
             value={line.unit_price}
             onChange={(e) => updateLine(i, { unit_price: e.target.value })}
+          />
+          <Input
+            placeholder="GST %"
+            className="w-20 shrink-0"
+            value={line.gst_percent}
+            onChange={(e) => updateLine(i, { gst_percent: e.target.value })}
           />
           {lines.length > 1 && (
             <button

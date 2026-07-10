@@ -126,6 +126,12 @@ export default function ExpenseClient({
   const [currency, setCurrency] = useState(
     () => initSettings.find(s => s.key === "currency")?.value ?? "INR"
   );
+  const [gstin, setGstin] = useState(
+    () => initSettings.find(s => s.key === "gstin")?.value ?? ""
+  );
+  const [businessAddress, setBusinessAddress] = useState(
+    () => initSettings.find(s => s.key === "business_address")?.value ?? ""
+  );
   const sym = CURRENCY_SYMBOLS[currency] ?? currency;
 
   const [selectedMonth, setSelectedMonth] = useState(currentYM);
@@ -249,6 +255,22 @@ export default function ExpenseClient({
     } catch {
       setCurrency(prev);
       setError("Failed to save currency setting.");
+    }
+  };
+
+  const saveGstin = async (value: string) => {
+    try {
+      await api.patch("/company-settings/gstin", { value }, getClientToken());
+    } catch {
+      setError("Failed to save GSTIN.");
+    }
+  };
+
+  const saveBusinessAddress = async (value: string) => {
+    try {
+      await api.patch("/company-settings/business_address", { value }, getClientToken());
+    } catch {
+      setError("Failed to save business address.");
     }
   };
 
@@ -412,6 +434,24 @@ export default function ExpenseClient({
             <Select value={currency} onChange={e => updateCurrency(e.target.value)}>
               {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
             </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">GSTIN</label>
+            <Input
+              placeholder="e.g. 29ABCDE1234F1Z5"
+              value={gstin}
+              onChange={e => setGstin(e.target.value)}
+              onBlur={e => saveGstin(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Address</label>
+            <Input
+              placeholder="Business address (for invoices)"
+              value={businessAddress}
+              onChange={e => setBusinessAddress(e.target.value)}
+              onBlur={e => saveBusinessAddress(e.target.value)}
+            />
           </div>
         </Card>
       )}
