@@ -65,6 +65,13 @@ export const api = {
     if (!res.ok) throw new Error(`Upload failed: ${await res.text()}`);
     return res.json();
   },
+  downloadBlob: async (path: string, token?: string): Promise<Blob> => {
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error(`Download failed: ${await res.text()}`);
+    return res.blob();
+  },
 };
 
 export type FabricItem = {
@@ -143,7 +150,13 @@ export type PurchaseOrderLine = {
 };
 export type PurchaseOrderDetail = PurchaseOrder & { lines: PurchaseOrderLine[] };
 
-export type SalesOrder = { id: number; customer_name: string; status: string };
+export type SalesOrder = {
+  id: number;
+  customer_name: string;
+  customer_phone: string | null;
+  customer_address: string | null;
+  status: string;
+};
 export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string };
 export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };
 
@@ -203,10 +216,14 @@ export type CompanySetting = { key: string; value: string };
 export type ProcurementItemCreate = {
   fabric_item_id?: number | null;
   new_fabric_name?: string | null;
+  new_fabric_composition?: string | null;
+  new_fabric_gsm?: number | null;
+  new_fabric_width?: number | null;
   supplier_id?: number | null;
   new_supplier_name?: string | null;
   fabric_qty: number;
   price: number;
+  image_url?: string | null;
 };
 
 export type Expense = {

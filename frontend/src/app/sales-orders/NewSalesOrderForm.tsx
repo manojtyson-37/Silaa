@@ -15,6 +15,8 @@ export default function NewSalesOrderForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +28,8 @@ export default function NewSalesOrderForm() {
     try {
       await api.post("/sales-orders", {
         customer_name: customerName,
+        customer_phone: customerPhone || null,
+        customer_address: customerAddress || null,
         lines: lines.map((l) => ({
           variant_id: Number(l.variant_id),
           qty: l.qty,
@@ -34,6 +38,8 @@ export default function NewSalesOrderForm() {
         created_by: "web",
       }, getClientToken());
       setCustomerName("");
+      setCustomerPhone("");
+      setCustomerAddress("");
       setLines([emptyLine()]);
       setOpen(false);
       router.refresh();
@@ -56,6 +62,8 @@ export default function NewSalesOrderForm() {
   return (
     <Card className="p-4 mb-5 bg-muted/30 flex flex-col gap-3 max-w-xl">
       <Input placeholder="Customer name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+      <Input placeholder="Customer phone (for invoice)" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+      <Input placeholder="Customer address (for invoice)" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
 
       {lines.map((line, i) => (
         <div key={i} className="flex flex-wrap gap-2 items-start">

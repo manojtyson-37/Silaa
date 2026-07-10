@@ -100,6 +100,7 @@ type ProcurementFormItem = {
   new_supplier_name: string;
   fabric_qty: string;
   price: string;
+  image_url: string;
 };
 
 const BLANK_FORM = () => ({
@@ -263,6 +264,19 @@ export default function ExpenseClient({
     finally { setUploading(false); }
   };
 
+  const uploadItemImage = async (idx: number, file: File) => {
+    setUploading(true);
+    try {
+      const { url } = await api.upload(file, getClientToken());
+      setExpForm(f => {
+        const arr = [...f.procurement_items];
+        arr[idx] = { ...arr[idx], image_url: url };
+        return { ...f, procurement_items: arr };
+      });
+    } catch { setError("Failed to upload image."); }
+    finally { setUploading(false); }
+  };
+
   // ── Expense actions ────────────────────────────────────────────────────────
 
   const addExpense = async () => {
@@ -279,6 +293,7 @@ export default function ExpenseClient({
         new_supplier_name: p.supplier_id === "new" ? p.new_supplier_name : null,
         fabric_qty: parseFloat(p.fabric_qty) || 0,
         price: parseFloat(p.price) || 0,
+        image_url: p.image_url || null,
       })) : [];
 
       const payload = {
@@ -783,10 +798,25 @@ export default function ExpenseClient({
                         });
                       }} />
                     </div>
+                    <div className="flex items-center gap-2">
+                      <label className={`flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                        <Paperclip size={11} />
+                        {item.image_url ? "Change image" : "Add image"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadItemImage(idx, f); }}
+                        />
+                      </label>
+                      {item.image_url && (
+                        <img src={item.image_url} alt="" className="h-8 w-8 object-cover rounded border" />
+                      )}
+                    </div>
                   </div>
                 ))}
                 <button
-                  onClick={() => setExpForm(f => ({ ...f, procurement_items: [...f.procurement_items, { fabric_item_id: "", new_fabric_name: "", new_fabric_composition: "", new_fabric_gsm: "", new_fabric_width: "", supplier_id: "", new_supplier_name: "", fabric_qty: "", price: "" }] }))}
+                  onClick={() => setExpForm(f => ({ ...f, procurement_items: [...f.procurement_items, { fabric_item_id: "", new_fabric_name: "", new_fabric_composition: "", new_fabric_gsm: "", new_fabric_width: "", supplier_id: "", new_supplier_name: "", fabric_qty: "", price: "", image_url: "" }] }))}
                   className="text-xs text-accent hover:text-primary mt-1 text-left"
                 >
                   + Add Item

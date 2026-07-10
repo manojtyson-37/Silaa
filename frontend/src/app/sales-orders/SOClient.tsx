@@ -40,7 +40,7 @@ export default function SOClient({ orders, margins }: Props) {
               <StatusPill value={order.status} />
             </Td>
             <Td className="font-medium">₹{marginByOrderId[order.id]?.total_margin ?? "—"}</Td>
-            <Td>{order.status === "draft" && <OrderActions orderId={order.id} />}</Td>
+            <Td><OrderActions orderId={order.id} status={order.status} /></Td>
           </tr>
         ))}
       </tbody>

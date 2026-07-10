@@ -14,6 +14,8 @@ type Props = {
 export default function EditSOForm({ order, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [customer_name, setCustomer_name] = useState(order.customer_name);
+  const [customer_phone, setCustomerPhone] = useState(order.customer_phone ?? "");
+  const [customer_address, setCustomerAddress] = useState(order.customer_address ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +23,11 @@ export default function EditSOForm({ order, onSaved }: Props) {
     setError(null);
     setSaving(true);
     try {
-      await api.patch(`/sales-orders/${order.id}`, { customer_name }, getClientToken());
+      await api.patch(`/sales-orders/${order.id}`, {
+        customer_name,
+        customer_phone: customer_phone || null,
+        customer_address: customer_address || null,
+      }, getClientToken());
       setEditing(false);
       onSaved();
     } catch (e) {
@@ -56,6 +62,16 @@ export default function EditSOForm({ order, onSaved }: Props) {
         placeholder="Customer name"
         value={customer_name}
         onChange={(e) => setCustomer_name(e.target.value)}
+      />
+      <Input
+        placeholder="Customer phone (for invoice)"
+        value={customer_phone}
+        onChange={(e) => setCustomerPhone(e.target.value)}
+      />
+      <Input
+        placeholder="Customer address (for invoice)"
+        value={customer_address}
+        onChange={(e) => setCustomerAddress(e.target.value)}
       />
 
       {error && <p className="text-xs text-red-600">{error}</p>}

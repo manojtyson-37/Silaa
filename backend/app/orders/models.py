@@ -24,6 +24,8 @@ class SalesOrder(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     customer_name: Mapped[str] = mapped_column(String, nullable=False)
+    customer_phone: Mapped[str] = mapped_column(String, nullable=True)
+    customer_address: Mapped[str] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default=SalesOrderStatus.DRAFT.value)
 
 

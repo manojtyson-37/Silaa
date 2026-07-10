@@ -170,6 +170,7 @@ class ProcurementItemCreate(BaseModel):
     new_supplier_name: Optional[str] = None
     fabric_qty: Decimal
     price: Decimal
+    image_url: Optional[str] = None
 
 
 class ExpenseIn(BaseModel):
@@ -257,13 +258,18 @@ def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
                     composition=item.new_fabric_composition,
                     gsm=item.new_fabric_gsm,
                     width=item.new_fabric_width,
-                    consumption_uom="meter"
+                    consumption_uom="meter",
+                    image_url=item.image_url,
                 )
                 db.add(fab)
                 db.flush()
                 fab_id = fab.id
             elif item.fabric_item_id:
                 fab_id = item.fabric_item_id
+                if item.image_url:
+                    fab = db.get(FabricItem, fab_id)
+                    if fab:
+                        fab.image_url = item.image_url
             else:
                 raise HTTPException(400, "Must provide fabric_item_id or new_fabric_name")
                 

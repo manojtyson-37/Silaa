@@ -2,12 +2,14 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_default_warehouse_id
 from app.db import get_db
-from app.orders.models import SalesOrder, SalesOrderLine
+from app.orders.invoice import generate_invoice_pdf
+from app.orders.models import SalesOrder, SalesOrderLine, SalesOrderStatus
 from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order
 
 router = APIRouter(tags=["orders"])
@@ -21,6 +23,8 @@ class SalesOrderLineIn(BaseModel):
 
 class SalesOrderIn(BaseModel):
     customer_name: str
+    customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
     lines: list[SalesOrderLineIn]
     created_by: str
 
@@ -28,11 +32,15 @@ class SalesOrderIn(BaseModel):
 class SalesOrderOut(BaseModel):
     id: int
     customer_name: str
+    customer_phone: Optional[str]
+    customer_address: Optional[str]
     status: str
 
 
 class SalesOrderUpdate(BaseModel):
     customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
 
 
 @router.post("/sales-orders", response_model=SalesOrderOut)
@@ -40,6 +48,8 @@ def create_order(payload: SalesOrderIn, db: Session = Depends(get_db)):
     order = create_sales_order(
         db,
         customer_name=payload.customer_name,
+        customer_phone=payload.customer_phone,
+        customer_address=payload.customer_address,
         lines=[l.model_dump() for l in payload.lines],
         created_by=payload.created_by,
     )
@@ -60,6 +70,8 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     return {
         "id": order.id,
         "customer_name": order.customer_name,
+        "customer_phone": order.customer_phone,
+        "customer_address": order.customer_address,
         "status": order.status,
         "lines": [
             {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price}
@@ -73,7 +85,7 @@ def update_sales_order(order_id: int, payload: SalesOrderUpdate, db: Session = D
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
-    if order.status != "DRAFT":
+    if order.status != SalesOrderStatus.DRAFT.value:
         raise HTTPException(400, "Can only update SalesOrder in DRAFT status")
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(order, k, v)
@@ -110,6 +122,20 @@ def cancel(order_id: int, db: Session = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return order
+
+
+@router.get("/sales-orders/{order_id}/invoice.pdf")
+def invoice(order_id: int, db: Session = Depends(get_db)):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    lines = db.query(SalesOrderLine).filter_by(sales_order_id=order_id).all()
+    pdf_bytes = generate_invoice_pdf(order, lines, db)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="invoice-so-{order_id}.pdf"'},
+    )
 
 
 @router.get("/sales-orders/{order_id}/margin")

@@ -14,9 +14,20 @@ class InsufficientStockError(Exception):
 
 
 def create_sales_order(
-    session: Session, *, customer_name: str, lines: list[dict], created_by: str
+    session: Session,
+    *,
+    customer_name: str,
+    lines: list[dict],
+    created_by: str,
+    customer_phone: str | None = None,
+    customer_address: str | None = None,
 ) -> SalesOrder:
-    order = SalesOrder(customer_name=customer_name, status=SalesOrderStatus.DRAFT.value)
+    order = SalesOrder(
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_address=customer_address,
+        status=SalesOrderStatus.DRAFT.value,
+    )
     session.add(order)
     session.flush()
     for line in lines:
