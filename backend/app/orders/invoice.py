@@ -9,11 +9,13 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 
 from app.expenses.models import CompanySetting
 from app.orders.models import SalesOrder, SalesOrderLine
 from app.style_variant.models import Style, StyleVariant
+
+ACCENT = colors.HexColor("#4f46e5")
 
 GST_STATE_CODES = {
     "01": "Jammu and Kashmir", "02": "Himachal Pradesh", "03": "Punjab",
@@ -100,26 +102,46 @@ def generate_invoice_pdf(order: SalesOrder, lines: list[SalesOrderLine], db) -> 
     )
 
     buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=20 * mm, bottomMargin=20 * mm)
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=16 * mm, bottomMargin=16 * mm)
     styles = getSampleStyleSheet()
+    title_center = ParagraphStyle("title_center", parent=styles["Title"], alignment=TA_CENTER, textColor=ACCENT)
     right_style = ParagraphStyle("right", parent=styles["Normal"], alignment=TA_RIGHT)
     right_small = ParagraphStyle("right_small", parent=styles["Normal"], alignment=TA_RIGHT, fontSize=9, textColor=colors.grey)
     small = ParagraphStyle("small", parent=styles["Normal"], fontSize=9, textColor=colors.grey)
+    label = ParagraphStyle("label", parent=small, fontSize=8, textColor=colors.grey)
     elements = []
 
     invoice_label = "TAX INVOICE" if gstin else "INVOICE"
     number_line = order.invoice_number or f"Sales Order #{order.id} (draft — number assigned on fulfillment)"
 
-    left_header = [
-        Paragraph(invoice_label, ParagraphStyle("label", parent=small, fontSize=8, textColor=colors.grey)),
-        Paragraph(escape(number_line), styles["Title"]),
-        Paragraph(f"Issued {date.today().strftime('%d %b %Y')}", small),
-    ]
-    right_lines = [Paragraph("<b>Silaa Collective</b>", right_style)]
+    elements.append(Paragraph(invoice_label, title_center))
+    elements.append(Spacer(1, 10))
+
+    logo_cell = Table([["₹"]], colWidths=[10 * mm], rowHeights=[10 * mm])
+    logo_cell.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), ACCENT),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 14),
+    ]))
+    name_block = [Paragraph("<b>Silaa Collective</b>", ParagraphStyle("bizname", parent=styles["Normal"], textColor=ACCENT, fontSize=13))]
+    business_row = Table([[logo_cell, name_block]], colWidths=[12 * mm, 88 * mm])
+    business_row.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+
+    left_header = [business_row]
     if business_address:
-        right_lines.append(Paragraph(escape(business_address), right_small))
+        left_header.append(Paragraph(escape(business_address), small))
+
+    right_lines = [Paragraph(f"<b>Invoice No:</b> {escape(number_line)}", right_small)]
+    right_lines.append(Paragraph(f"<b>Invoice Date:</b> {date.today().strftime('%d %b %Y')}", right_small))
     if gstin:
-        right_lines.append(Paragraph(f"GSTIN: {escape(gstin)}", right_small))
+        right_lines.append(Paragraph(f"<b>GSTIN:</b> {escape(gstin)}", right_small))
+        right_lines.append(Paragraph(f"<b>State:</b> {escape(business_state or '')}", right_small))
 
     header_table = Table([[left_header, right_lines]], colWidths=[100 * mm, 70 * mm])
     header_table.setStyle(TableStyle([
@@ -128,22 +150,29 @@ def generate_invoice_pdf(order: SalesOrder, lines: list[SalesOrderLine], db) -> 
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 16))
+    elements.append(Spacer(1, 4))
+    elements.append(Table([[""]], colWidths=[170 * mm], style=TableStyle([("LINEBELOW", (0, 0), (-1, -1), 1, ACCENT)])))
+    elements.append(Spacer(1, 14))
 
-    elements.append(Paragraph("BILLED TO", ParagraphStyle("label2", parent=small, fontSize=8, textColor=colors.grey)))
-    elements.append(Paragraph(f"<b>{escape(order.customer_name)}</b>", styles["Normal"]))
+    bill_to = [Paragraph("BILLED TO", label), Paragraph(f"<b>{escape(order.customer_name)}</b>", styles["Normal"])]
     if order.customer_phone:
-        elements.append(Paragraph(escape(order.customer_phone), small))
+        bill_to.append(Paragraph(escape(order.customer_phone), small))
     if order.customer_address:
-        elements.append(Paragraph(escape(order.customer_address), small))
+        bill_to.append(Paragraph(escape(order.customer_address), small))
     if order.customer_state:
-        elements.append(Paragraph(escape(order.customer_state), small))
+        bill_to.append(Paragraph(escape(order.customer_state), small))
+
+    meta_lines = []
     if gstin:
-        elements.append(Paragraph(
-            f"Place of Supply: {escape(order.customer_state or 'Unknown')} — "
-            f"{'Intra-State (CGST + SGST)' if same_state else 'Inter-State (IGST)'}",
-            small,
+        meta_lines.append(Paragraph(f"<b>Place of Supply:</b> {escape(order.customer_state or 'Unknown')}", right_small))
+        meta_lines.append(Paragraph(
+            f"<b>Supply Type:</b> {'Intra-State (CGST + SGST)' if same_state else 'Inter-State (IGST)'}",
+            right_small,
         ))
+
+    info_row = Table([[bill_to, meta_lines]], colWidths=[100 * mm, 70 * mm])
+    info_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elements.append(info_row)
     elements.append(Spacer(1, 16))
 
     table_data = [["Item", "SKU", "Qty", "Unit Price", "GST %", "Total"]]
@@ -165,7 +194,8 @@ def generate_invoice_pdf(order: SalesOrder, lines: list[SalesOrderLine], db) -> 
 
     table = Table(table_data, colWidths=[55 * mm, 28 * mm, 15 * mm, 25 * mm, 17 * mm, 30 * mm])
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f0f0f0")),
+        ("BACKGROUND", (0, 0), (-1, 0), ACCENT),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
@@ -192,6 +222,7 @@ def generate_invoice_pdf(order: SalesOrder, lines: list[SalesOrderLine], db) -> 
         ("ALIGN", (0, 0), (-1, -1), "RIGHT"),
         ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
         ("FONTSIZE", (0, -1), (-1, -1), 12),
+        ("TEXTCOLOR", (0, -1), (-1, -1), ACCENT),
         ("LINEABOVE", (0, -1), (-1, -1), 1, colors.black),
         ("TOPPADDING", (0, -1), (-1, -1), 6),
     ]))
@@ -199,20 +230,30 @@ def generate_invoice_pdf(order: SalesOrder, lines: list[SalesOrderLine], db) -> 
     elements.append(Spacer(1, 8))
     elements.append(Paragraph(f"<i>{escape(amount_in_words(grand_total))}</i>", small))
 
+    footer_left = []
     if bank_name or bank_account or bank_ifsc:
-        elements.append(Spacer(1, 20))
-        elements.append(Paragraph("BANK DETAILS", ParagraphStyle("label3", parent=small, fontSize=8, textColor=colors.grey)))
+        footer_left.append(Paragraph("BANK DETAILS", label))
         if bank_name:
-            elements.append(Paragraph(f"Bank: {escape(bank_name)}", small))
+            footer_left.append(Paragraph(f"Bank: {escape(bank_name)}", small))
         if bank_account:
-            elements.append(Paragraph(f"A/c No.: {escape(bank_account)}", small))
+            footer_left.append(Paragraph(f"A/c No.: {escape(bank_account)}", small))
         if bank_ifsc:
-            elements.append(Paragraph(f"IFSC: {escape(bank_ifsc)}", small))
+            footer_left.append(Paragraph(f"IFSC: {escape(bank_ifsc)}", small))
 
+    footer_right = []
     if invoice_terms:
-        elements.append(Spacer(1, 12))
-        elements.append(Paragraph("TERMS & CONDITIONS", ParagraphStyle("label4", parent=small, fontSize=8, textColor=colors.grey)))
-        elements.append(Paragraph(escape(invoice_terms), small))
+        footer_right.append(Paragraph("TERMS & CONDITIONS", label))
+        footer_right.append(Paragraph(escape(invoice_terms), small))
+    footer_right.append(Spacer(1, 24))
+    footer_right.append(Paragraph(f"<b>For Silaa Collective</b>", right_style))
+    footer_right.append(Spacer(1, 16))
+    footer_right.append(Paragraph("Authorised Signatory", right_small))
+
+    if footer_left or footer_right:
+        elements.append(Spacer(1, 24))
+        footer_row = Table([[footer_left or [Paragraph("", small)], footer_right]], colWidths=[100 * mm, 70 * mm])
+        footer_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+        elements.append(footer_row)
 
     doc.build(elements)
     return buf.getvalue()
