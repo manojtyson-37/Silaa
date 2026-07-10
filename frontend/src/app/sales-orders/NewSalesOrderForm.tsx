@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, INDIAN_STATES } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Card, Input, Select } from "@/components/ui";
 
 type Line = { variant_id: string; qty: string; unit_price: string; gst_percent: string };
 
@@ -17,6 +17,7 @@ export default function NewSalesOrderForm() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerState, setCustomerState] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export default function NewSalesOrderForm() {
         customer_name: customerName,
         customer_phone: customerPhone || null,
         customer_address: customerAddress || null,
+        customer_state: customerState || null,
         lines: lines.map((l) => ({
           variant_id: Number(l.variant_id),
           qty: l.qty,
@@ -41,6 +43,7 @@ export default function NewSalesOrderForm() {
       setCustomerName("");
       setCustomerPhone("");
       setCustomerAddress("");
+      setCustomerState("");
       setLines([emptyLine()]);
       setOpen(false);
       router.refresh();
@@ -65,6 +68,10 @@ export default function NewSalesOrderForm() {
       <Input placeholder="Customer name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
       <Input placeholder="Customer phone (for invoice)" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
       <Input placeholder="Customer address (for invoice)" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
+      <Select value={customerState} onChange={(e) => setCustomerState(e.target.value)}>
+        <option value="">Customer state (for GST)</option>
+        {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+      </Select>
 
       {lines.map((line, i) => (
         <div key={i} className="flex flex-wrap gap-2 items-start">

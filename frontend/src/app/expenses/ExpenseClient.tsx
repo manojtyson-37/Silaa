@@ -132,6 +132,18 @@ export default function ExpenseClient({
   const [businessAddress, setBusinessAddress] = useState(
     () => initSettings.find(s => s.key === "business_address")?.value ?? ""
   );
+  const [bankName, setBankName] = useState(
+    () => initSettings.find(s => s.key === "bank_name")?.value ?? ""
+  );
+  const [bankAccount, setBankAccount] = useState(
+    () => initSettings.find(s => s.key === "bank_account")?.value ?? ""
+  );
+  const [bankIfsc, setBankIfsc] = useState(
+    () => initSettings.find(s => s.key === "bank_ifsc")?.value ?? ""
+  );
+  const [invoiceTerms, setInvoiceTerms] = useState(
+    () => initSettings.find(s => s.key === "invoice_terms")?.value ?? ""
+  );
   const sym = CURRENCY_SYMBOLS[currency] ?? currency;
 
   const [selectedMonth, setSelectedMonth] = useState(currentYM);
@@ -258,19 +270,11 @@ export default function ExpenseClient({
     }
   };
 
-  const saveGstin = async (value: string) => {
+  const saveSetting = async (key: string, value: string, label: string) => {
     try {
-      await api.patch("/company-settings/gstin", { value }, getClientToken());
+      await api.patch(`/company-settings/${key}`, { value }, getClientToken());
     } catch {
-      setError("Failed to save GSTIN.");
-    }
-  };
-
-  const saveBusinessAddress = async (value: string) => {
-    try {
-      await api.patch("/company-settings/business_address", { value }, getClientToken());
-    } catch {
-      setError("Failed to save business address.");
+      setError(`Failed to save ${label}.`);
     }
   };
 
@@ -441,7 +445,7 @@ export default function ExpenseClient({
               placeholder="e.g. 29ABCDE1234F1Z5"
               value={gstin}
               onChange={e => setGstin(e.target.value)}
-              onBlur={e => saveGstin(e.target.value)}
+              onBlur={e => saveSetting("gstin", e.target.value, "GSTIN")}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -450,7 +454,44 @@ export default function ExpenseClient({
               placeholder="Business address (for invoices)"
               value={businessAddress}
               onChange={e => setBusinessAddress(e.target.value)}
-              onBlur={e => saveBusinessAddress(e.target.value)}
+              onBlur={e => saveSetting("business_address", e.target.value, "business address")}
+            />
+          </div>
+          <p className="text-xs font-medium text-foreground mt-1">Invoice Bank Details</p>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Bank</label>
+            <Input
+              placeholder="Bank name"
+              value={bankName}
+              onChange={e => setBankName(e.target.value)}
+              onBlur={e => saveSetting("bank_name", e.target.value, "bank name")}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">A/c No.</label>
+            <Input
+              placeholder="Account number"
+              value={bankAccount}
+              onChange={e => setBankAccount(e.target.value)}
+              onBlur={e => saveSetting("bank_account", e.target.value, "bank account")}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">IFSC</label>
+            <Input
+              placeholder="IFSC code"
+              value={bankIfsc}
+              onChange={e => setBankIfsc(e.target.value)}
+              onBlur={e => saveSetting("bank_ifsc", e.target.value, "IFSC")}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Terms</label>
+            <Input
+              placeholder="Invoice terms & conditions"
+              value={invoiceTerms}
+              onChange={e => setInvoiceTerms(e.target.value)}
+              onBlur={e => saveSetting("invoice_terms", e.target.value, "invoice terms")}
             />
           </div>
         </Card>

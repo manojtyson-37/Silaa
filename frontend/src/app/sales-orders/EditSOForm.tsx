@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Edit2, X } from "lucide-react";
-import { api, SalesOrder } from "@/lib/api";
+import { api, SalesOrder, INDIAN_STATES } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Card, Input, Select } from "@/components/ui";
 
 type Props = {
   order: SalesOrder;
@@ -16,6 +16,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
   const [customer_name, setCustomer_name] = useState(order.customer_name);
   const [customer_phone, setCustomerPhone] = useState(order.customer_phone ?? "");
   const [customer_address, setCustomerAddress] = useState(order.customer_address ?? "");
+  const [customer_state, setCustomerState] = useState(order.customer_state ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
         customer_name,
         customer_phone: customer_phone || null,
         customer_address: customer_address || null,
+        customer_state: customer_state || null,
       }, getClientToken());
       setEditing(false);
       onSaved();
@@ -73,6 +75,10 @@ export default function EditSOForm({ order, onSaved }: Props) {
         value={customer_address}
         onChange={(e) => setCustomerAddress(e.target.value)}
       />
+      <Select value={customer_state} onChange={(e) => setCustomerState(e.target.value)}>
+        <option value="">Customer state (for GST)</option>
+        {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+      </Select>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
 

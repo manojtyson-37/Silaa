@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -13,6 +14,11 @@ class InsufficientStockError(Exception):
     pass
 
 
+def _financial_year_label(d: date) -> str:
+    start_year = d.year if d.month >= 4 else d.year - 1
+    return f"{start_year}-{str(start_year + 1)[-2:]}"
+
+
 def create_sales_order(
     session: Session,
     *,
@@ -21,11 +27,13 @@ def create_sales_order(
     created_by: str,
     customer_phone: str | None = None,
     customer_address: str | None = None,
+    customer_state: str | None = None,
 ) -> SalesOrder:
     order = SalesOrder(
         customer_name=customer_name,
         customer_phone=customer_phone,
         customer_address=customer_address,
+        customer_state=customer_state,
         status=SalesOrderStatus.DRAFT.value,
     )
     session.add(order)
@@ -70,6 +78,9 @@ def fulfill_order(
         )
 
     order.status = SalesOrderStatus.FULFILLED.value
+    if not order.invoice_number:
+        today = date.today()
+        order.invoice_number = f"SC/{_financial_year_label(today)}/{order.id:04d}"
     session.commit()
     return order
 

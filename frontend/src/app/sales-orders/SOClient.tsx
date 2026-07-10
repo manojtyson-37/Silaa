@@ -29,7 +29,7 @@ export default function SOClient({ orders, margins }: Props) {
       <tbody>
         {orders.map((order) => (
           <tr key={`${order.id}-${refreshKey}`}>
-            <Td className="font-mono text-xs">#{order.id}</Td>
+            <Td className="font-mono text-xs">{order.invoice_number ?? `#${order.id}`}</Td>
             <Td className="flex items-center gap-2">
               {order.customer_name}
               {order.status === "draft" && (

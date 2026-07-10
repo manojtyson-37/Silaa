@@ -141,7 +141,10 @@ def list_settings(db: Session = Depends(get_db)):
     return db.scalars(select(CompanySetting)).all()
 
 
-_ALLOWED_SETTING_KEYS = {"currency", "gstin", "business_address"}
+_ALLOWED_SETTING_KEYS = {
+    "currency", "gstin", "business_address",
+    "bank_name", "bank_account", "bank_ifsc", "invoice_terms",
+}
 
 
 @router.patch("/company-settings/{key}", response_model=SettingOut, dependencies=[Depends(RequireRole(["admin"]))])

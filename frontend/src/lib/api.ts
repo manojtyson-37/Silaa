@@ -155,10 +155,22 @@ export type SalesOrder = {
   customer_name: string;
   customer_phone: string | null;
   customer_address: string | null;
+  customer_state: string | null;
+  invoice_number: string | null;
   status: string;
 };
-export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string };
+export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string; gst_percent: string };
 export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };
+
+export const INDIAN_STATES = [
+  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam",
+  "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir",
+  "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha",
+  "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+];
 
 export type CostBreakdown = {
   fabric_cost: string;

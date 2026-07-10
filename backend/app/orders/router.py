@@ -26,6 +26,7 @@ class SalesOrderIn(BaseModel):
     customer_name: str
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
+    customer_state: Optional[str] = None
     lines: list[SalesOrderLineIn]
     created_by: str
 
@@ -35,6 +36,8 @@ class SalesOrderOut(BaseModel):
     customer_name: str
     customer_phone: Optional[str]
     customer_address: Optional[str]
+    customer_state: Optional[str]
+    invoice_number: Optional[str]
     status: str
 
 
@@ -42,6 +45,7 @@ class SalesOrderUpdate(BaseModel):
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
+    customer_state: Optional[str] = None
 
 
 @router.post("/sales-orders", response_model=SalesOrderOut)
@@ -51,6 +55,7 @@ def create_order(payload: SalesOrderIn, db: Session = Depends(get_db)):
         customer_name=payload.customer_name,
         customer_phone=payload.customer_phone,
         customer_address=payload.customer_address,
+        customer_state=payload.customer_state,
         lines=[l.model_dump() for l in payload.lines],
         created_by=payload.created_by,
     )
@@ -73,6 +78,8 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         "customer_name": order.customer_name,
         "customer_phone": order.customer_phone,
         "customer_address": order.customer_address,
+        "customer_state": order.customer_state,
+        "invoice_number": order.invoice_number,
         "status": order.status,
         "lines": [
             {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price, "gst_percent": l.gst_percent}
