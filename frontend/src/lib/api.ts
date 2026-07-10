@@ -189,6 +189,7 @@ export type OrderMarginLine = {
   margin: string;
 };
 export type OrderMargin = { order_id: number; lines: OrderMarginLine[]; total_margin: string };
+export type OrderMarginTotal = { order_id: number; total_margin: string };
 
 export type DashboardEvent = {
   production_order_id: number;

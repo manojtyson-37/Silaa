@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { SalesOrder, OrderMargin } from "@/lib/api";
+import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Table, Td, Th } from "@/components/ui";
 import OrderActions from "./OrderActions";
 import EditSOForm from "./EditSOForm";
 
 type Props = {
   orders: SalesOrder[];
-  margins: OrderMargin[];
+  margins: OrderMarginTotal[];
 };
 
 export default function SOClient({ orders, margins }: Props) {

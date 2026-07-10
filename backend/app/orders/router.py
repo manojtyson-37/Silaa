@@ -67,6 +67,26 @@ def list_orders(db: Session = Depends(get_db)):
     return db.query(SalesOrder).all()
 
 
+@router.get("/sales-orders/margins")
+def all_margins(db: Session = Depends(get_db)):
+    """One-shot margin totals for every order — replaces the per-order
+    /margin fan-out that made the Sales Orders page slow (was N HTTP calls,
+    each doing N cost queries against a cross-region DB). Loads all lines and
+    all variant costs in a fixed number of queries, computes in memory.
+
+    Declared before /sales-orders/{order_id} so 'margins' isn't parsed as an id."""
+    from app.finished_goods.service import average_unit_costs
+
+    lines = db.query(SalesOrderLine).all()
+    costs = average_unit_costs(db, [l.variant_id for l in lines])
+    totals: dict[int, Decimal] = {}
+    for line in lines:
+        unit_cost = costs.get(line.variant_id, Decimal("0"))
+        totals[line.sales_order_id] = totals.get(line.sales_order_id, Decimal("0")) + (line.unit_price - unit_cost) * line.qty
+    order_ids = [o.id for o in db.query(SalesOrder.id).all()]
+    return [{"order_id": oid, "total_margin": totals.get(oid, Decimal("0"))} for oid in order_ids]
+
+
 @router.get("/sales-orders/{order_id}")
 def get_order(order_id: int, db: Session = Depends(get_db)):
     order = db.get(SalesOrder, order_id)

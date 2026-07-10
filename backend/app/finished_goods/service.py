@@ -73,6 +73,34 @@ def average_unit_cost(session: Session, variant_id: int) -> Decimal:
     return total_cost / total_qty
 
 
+def average_unit_costs(session: Session, variant_ids: list[int]) -> dict[int, Decimal]:
+    """Batched form of average_unit_cost: one query for every variant instead
+    of one query per variant. Returns {variant_id: weighted_avg_cost}, with a
+    Decimal('0') fallback for any variant that has no production_complete
+    entries. Avoids the N+1 that made the Sales Orders margin column slow."""
+    if not variant_ids:
+        return {}
+    unique_ids = list(set(variant_ids))
+    entries = (
+        session.query(FinishedGoodsLedgerEntry)
+        .filter(
+            FinishedGoodsLedgerEntry.variant_id.in_(unique_ids),
+            FinishedGoodsLedgerEntry.txn_type == "production_complete",
+            FinishedGoodsLedgerEntry.direction == Direction.IN.value,
+        )
+        .all()
+    )
+    totals: dict[int, list] = {vid: [Decimal("0"), Decimal("0")] for vid in unique_ids}
+    for e in entries:
+        acc = totals[e.variant_id]
+        acc[0] += e.quantity
+        acc[1] += e.quantity * (e.unit_cost or Decimal("0"))
+    return {
+        vid: (cost / qty if qty else Decimal("0"))
+        for vid, (qty, cost) in totals.items()
+    }
+
+
 def write_production_complete(
     session: Session,
     *,
