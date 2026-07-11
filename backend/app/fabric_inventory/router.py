@@ -236,3 +236,56 @@ def add_landed_cost(lot_id: int, payload: LandedCostIn, db: Session = Depends(ge
     db.add(entry)
     db.commit()
     return {"id": entry.id, "fabric_lot_id": lot_id, "amount": entry.amount}
+
+
+class ReadyStockIn(BaseModel):
+    variant_id: int
+    qty_pieces: Decimal
+    fabric_qty_used: Decimal
+    created_by: str
+
+
+@router.post("/fabric-lots/{lot_id}/log-ready-stock", status_code=201)
+def log_ready_stock(
+    lot_id: int,
+    payload: ReadyStockIn,
+    db: Session = Depends(get_db),
+    warehouse_id: int = Depends(get_default_warehouse_id),
+):
+    from app.fabric_inventory.models import FabricLedgerEntry
+    from app.finished_goods.service import record_movement
+
+    lot = db.get(FabricLot, lot_id)
+    if lot is None:
+        raise HTTPException(404, "FabricLot not found")
+
+    balance = fabric_balance(db, lot_id, warehouse_id)
+    if payload.fabric_qty_used > balance:
+        raise HTTPException(400, f"Insufficient fabric: requested {payload.fabric_qty_used}, available {balance}")
+
+    fabric_entry = FabricLedgerEntry(
+        fabric_lot_id=lot_id,
+        warehouse_id=warehouse_id,
+        quantity=payload.fabric_qty_used,
+        direction=Direction.OUT.value,
+        txn_type="issue",
+        reason_code="ready_stock",
+        created_by=payload.created_by,
+    )
+    db.add(fabric_entry)
+    db.flush()
+
+    fg_entry = record_movement(
+        db,
+        variant_id=payload.variant_id,
+        qty=payload.qty_pieces,
+        direction=Direction.IN,
+        txn_type="stock_audit",
+        warehouse_id=warehouse_id,
+        reason_code="ready_stock",
+        created_by=payload.created_by,
+        commit=False,
+    )
+
+    db.commit()
+    return {"fabric_entry_id": fabric_entry.id, "fg_entry_id": fg_entry.id}

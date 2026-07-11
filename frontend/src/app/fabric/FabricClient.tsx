@@ -5,6 +5,7 @@ import { api, FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
 import { Card, Table, Th, Td, Tr } from "@/components/ui";
 import EditFabricItemForm from "./EditFabricItemForm";
 import GRNForm from "./GRNForm";
+import LogReadyStockForm from "./LogReadyStockForm";
 import EditLotRow from "./EditLotRow";
 import { Pencil, Trash2 } from "lucide-react";
 import { getClientToken } from "@/lib/clientAuth";
@@ -192,6 +193,11 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
             
             <div className="mt-2">
               <GRNForm fabricItems={fabricItems} suppliers={suppliers} preSelectedFabricId={item.id} />
+              <LogReadyStockForm
+                fabricItemId={item.id}
+                lots={itemLots}
+                onDone={() => setRefreshKey(k => k + 1)}
+              />
             </div>
           </Card>
         );
