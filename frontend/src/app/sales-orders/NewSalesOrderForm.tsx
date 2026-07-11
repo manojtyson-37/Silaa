@@ -24,7 +24,7 @@ type Props = { onClose?: () => void };
 
 export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(!onClose); // controlled externally when onClose is passed
+  const [open, setOpen] = useState(true);
   const [styles, setStyles] = useState<StyleWithVariants[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
