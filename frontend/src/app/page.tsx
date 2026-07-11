@@ -5,7 +5,7 @@ import { Card } from "@/components/ui";
 import { requireAuth } from "@/lib/serverAuth";
 
 const EVENT_LABELS: Record<string, { label: string; color: string }> = {
-  order_created:      { label: "Order created",      color: "bg-indigo-400" },
+  order_created:      { label: "Order created",      color: "bg-slate-400" },
   cutting_recorded:   { label: "Cutting recorded",   color: "bg-blue-500" },
   stitching_sent:     { label: "Sent to stitching",  color: "bg-amber-400" },
   stitching_received: { label: "Stitching received", color: "bg-amber-500" },
@@ -35,9 +35,9 @@ const STATS = [
     label: "Open Production Orders",
     sub: "In progress",
     icon: Factory,
-    border: "border-l-indigo-500",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
+    border: "border-l-slate-500",
+    iconBg: "bg-slate-100",
+    iconColor: "text-slate-600",
     href: "/production",
   },
   {
@@ -65,9 +65,9 @@ const STATS = [
     label: "Pending Purchase Orders",
     sub: "Draft or approved",
     icon: Package,
-    border: "border-l-violet-500",
-    iconBg: "bg-violet-50",
-    iconColor: "text-violet-600",
+    border: "border-l-teal-500",
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-700",
     href: "/purchase-orders",
   },
 ];

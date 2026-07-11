@@ -1,31 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  /* Slate/Navy base for text and structure */
-  --color-primary: #0f172a;
+  /* Minimalism/Swiss system (ui-ux-pro-max): industrial slate + stock green.
+     WCAG AAA targets — accent #047857 is 5.2:1 on white. */
+  --color-primary: #334155;
   --color-on-primary: #ffffff;
-  --color-secondary: #334155;
-  
-  /* Vibrant Indigo accent */
-  --color-accent: #4f46e5;
-  
+  --color-secondary: #475569;
+
+  /* Emerald accent — inventory/stock green, CTA + active states */
+  --color-accent: #047857;
+
   /* Backgrounds */
   --color-background: #f8fafc;
   --color-surface: #ffffff;
-  
+
   /* Foreground text */
   --color-foreground: #0f172a;
-  
+
   /* Muted elements and borders */
   --color-muted: #f1f5f9;
   --color-muted-foreground: #64748b;
   --color-border: #e2e8f0;
-  --color-ring: #cbd5e1;
+  --color-ring: #34d399;
 
   /* Semantic colors */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-destructive: #ef4444;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-destructive: #dc2626;
 }
 
 @theme inline {
