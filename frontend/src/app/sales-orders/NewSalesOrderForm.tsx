@@ -26,6 +26,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const [styles, setStyles] = useState<StyleWithVariants[]>([]);
+  const [stylesError, setStylesError] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
@@ -35,12 +36,10 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open && styles.length === 0) {
-      api.get<StyleWithVariants[]>("/styles-with-variants", getClientToken())
-        .then(setStyles)
-        .catch(() => {});
-    }
-  }, [open]);
+    api.get<StyleWithVariants[]>("/styles-with-variants", getClientToken())
+      .then((data) => { setStyles(data); setStylesError(null); })
+      .catch((e) => setStylesError(e instanceof Error ? e.message : "Failed to load styles"));
+  }, []);
 
   const updateLine = (i: number, patch: Partial<Line>) =>
     setLines((prev) => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
@@ -120,6 +119,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
 
         {/* Line items */}
         <div>
+          {stylesError && <p className="text-xs text-destructive mb-2">Styles: {stylesError}</p>}
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Items</p>
           <div className="border border-border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
