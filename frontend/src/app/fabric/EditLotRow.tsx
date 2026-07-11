@@ -50,7 +50,7 @@ export default function EditLotRow({ lot, suppliers, onSaved, onCancel }: Props)
       <Td className="align-top">
         <Input placeholder="Cost / unit" value={costPerUom} onChange={(e) => setCostPerUom(e.target.value)} />
       </Td>
-      <Td className="font-medium align-top pt-5">{lot.balance}</Td>
+      <Td className="font-medium align-top pt-5 tnum">{Number(lot.balance).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</Td>
       <Td className="align-top">
         <div className="flex gap-2 items-center h-[34px]">
           <Button variant="ghost" onClick={submit} disabled={!supplierId || !costPerUom}>Save</Button>

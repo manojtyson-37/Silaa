@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { fmtQty, fmtCost } from "@/lib/format";
 import { api, FabricItem, FabricLotWithBalance, Supplier } from "@/lib/api";
 import { Card, Table, Th, Td, Tr } from "@/components/ui";
 import EditFabricItemForm from "./EditFabricItemForm";
@@ -100,7 +101,7 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Total Stock</p>
-                    <p className="text-xl font-medium">{totalBalance} <span className="text-sm font-normal text-muted-foreground">{item.consumption_uom}s</span></p>
+                    <p className="text-xl font-medium">{fmtQty(totalBalance)} <span className="text-sm font-normal text-muted-foreground">{item.consumption_uom}s</span></p>
                   </div>
                 </div>
                 {!isEditing ? (
@@ -128,7 +129,7 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                       <Th>Supplier</Th>
                       <Th>Dye Lot</Th>
                       <Th>Cost / {item.consumption_uom}</Th>
-                      <Th>Balance</Th>
+                      <Th>Stock left</Th>
                       <Th>{null}</Th>
                     </tr>
                   </thead>
@@ -153,8 +154,8 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                           <Td className="font-mono text-xs">#{lot.id}</Td>
                           <Td>{supplierMap.get(lot.supplier_id) || `ID: ${lot.supplier_id}`}</Td>
                           <Td className="text-muted-foreground">{lot.dye_lot_no ?? "—"}</Td>
-                          <Td>₹{lot.cost_per_uom}</Td>
-                          <Td className="font-medium">{lot.balance}</Td>
+                          <Td>{fmtCost(lot.cost_per_uom)}</Td>
+                          <Td className="font-medium tnum">{fmtQty(lot.balance)}</Td>
                           <Td className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button

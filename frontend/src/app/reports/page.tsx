@@ -1,4 +1,5 @@
 import { api, FabricVarianceRow, Style, Supplier, WastageRejectionReport } from "@/lib/api";
+import { fmtQty } from "@/lib/format";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 import { requireAuth } from "@/lib/serverAuth";
 
@@ -40,12 +41,12 @@ export default async function ReportsPage() {
                 <Td className="font-mono text-xs">#{row.production_order_id}</Td>
                 <Td>{styleMap.get(row.style_id) ?? `Style #${row.style_id}`}</Td>
                 <Td className="font-mono text-xs">#{row.fabric_lot_id}</Td>
-                <Td>{row.planned_fabric_qty}</Td>
-                <Td>{row.actual_fabric_qty}</Td>
+                <Td>{fmtQty(row.planned_fabric_qty)}</Td>
+                <Td>{fmtQty(row.actual_fabric_qty)}</Td>
                 <Td className={Number(row.variance_qty) > 0 ? "text-destructive font-medium" : ""}>
-                  {row.variance_qty}
+                  {fmtQty(row.variance_qty)}
                 </Td>
-                <Td className="text-muted-foreground">{row.wastage_qty}</Td>
+                <Td className="text-muted-foreground">{fmtQty(row.wastage_qty)}</Td>
               </tr>
             ))}
           </tbody>
@@ -55,7 +56,7 @@ export default async function ReportsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
         <ReportCard
           title="Wastage by style"
-          rows={wastage.wastage_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, r.wastage_qty])}
+          rows={wastage.wastage_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, fmtQty(r.wastage_qty)])}
         />
         <ReportCard
           title="Rejection by vendor"
@@ -66,7 +67,7 @@ export default async function ReportsPage() {
         />
         <ReportCard
           title="Scrapped by style"
-          rows={wastage.scrapped_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, r.scrapped_qty])}
+          rows={wastage.scrapped_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, fmtQty(r.scrapped_qty)])}
         />
       </div>
     </main>

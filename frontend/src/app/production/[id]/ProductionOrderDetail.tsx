@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { fmtQty } from "@/lib/format";
 import { api, ProductionEvent, ProductionOrder } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Button, Card, Input, Select, StatusPill, Table, Td, Th } from "@/components/ui";
@@ -62,7 +63,7 @@ export default function ProductionOrderDetail({
             {variants.map((v) => (
               <li key={v.variant_id} className="flex justify-between">
                 <span className="text-muted-foreground">Variant #{v.variant_id}</span>
-                <span className="font-medium">planned {v.planned_qty}</span>
+                <span className="font-medium">planned {fmtQty(v.planned_qty)}</span>
               </li>
             ))}
           </ul>
@@ -180,9 +181,9 @@ function CuttingSection({
             {records.map((r) => (
               <tr key={r.id}>
                 <Td className="font-mono text-xs">#{r.fabric_lot_id}</Td>
-                <Td>{r.actual_fabric_qty}</Td>
-                <Td>{r.cut_pieces_qty}</Td>
-                <Td className="text-muted-foreground">{r.wastage_qty}</Td>
+                <Td>{fmtQty(r.actual_fabric_qty)}</Td>
+                <Td>{fmtQty(r.cut_pieces_qty)}</Td>
+                <Td className="text-muted-foreground">{fmtQty(r.wastage_qty)}</Td>
               </tr>
             ))}
           </tbody>
@@ -345,7 +346,7 @@ function BatchRow({
         {batch.qc_state && <StatusPill value={batch.qc_state} />}
       </div>
       <div className="text-xs text-muted-foreground mt-1">
-        sent {batch.sent_qty} · received {batch.received_qty} · rejected {batch.rejected_qty}
+        sent {fmtQty(batch.sent_qty)} · received {fmtQty(batch.received_qty)} · rejected {fmtQty(batch.rejected_qty)}
       </div>
 
       {batch.qc_state === null && (
