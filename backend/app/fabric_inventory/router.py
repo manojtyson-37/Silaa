@@ -111,8 +111,10 @@ def delete_fabric_item(item_id: int, db: Session = Depends(get_db)):
     if item is None:
         raise HTTPException(404, "FabricItem not found")
     
+    from app.production.models import CuttingRecord
     lots = db.query(FabricLot).filter_by(fabric_item_id=item_id).all()
     for lot in lots:
+        db.query(CuttingRecord).filter_by(fabric_lot_id=lot.id).delete()
         db.query(FabricLedgerEntry).filter_by(fabric_lot_id=lot.id).delete()
         db.query(LandedCostEntry).filter_by(fabric_lot_id=lot.id).delete()
         db.delete(lot)
@@ -186,9 +188,11 @@ def delete_fabric_lot(lot_id: int, db: Session = Depends(get_db), warehouse_id: 
     if lot is None:
         raise HTTPException(404, "FabricLot not found")
         
+    from app.production.models import CuttingRecord
+    db.query(CuttingRecord).filter_by(fabric_lot_id=lot_id).delete()
     db.query(FabricLedgerEntry).filter_by(fabric_lot_id=lot_id).delete()
     db.query(LandedCostEntry).filter_by(fabric_lot_id=lot_id).delete()
-    
+
     db.delete(lot)
     db.commit()
 

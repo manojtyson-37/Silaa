@@ -11,7 +11,7 @@ const NAV = [
   { href: "/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
   { href: "/fabric", label: "Fabric Inventory", icon: Boxes },
   { href: "/production", label: "Production Orders", icon: Factory },
-  { href: "/sales-orders", label: "Sales Orders", icon: ShoppingCart },
+  { href: "/sales-orders", label: "Invoices", icon: ShoppingCart },
   { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
