@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlalchemy import ForeignKey, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.ledger_base import LedgerEntryMixin, register_ledger_model
 from app.db import Base
@@ -30,6 +30,15 @@ class FabricLot(Base):
     dye_lot_no: Mapped[str] = mapped_column(String, nullable=True)  # deferred decision, see Revision 1 Change 1
     received_qty: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
     cost_per_uom: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)  # PO price only
+
+    # Cascade lets SQLAlchemy order multi-table deletes correctly; without it
+    # a parent DELETE can be flushed before its children -> FK violation.
+    # NOTE: FabricLedgerEntry is deliberately NOT cascaded — ledger rows are
+    # append-only (register_ledger_model blocks ORM deletes); delete paths
+    # that legitimately retract a GRN use bulk table deletes as the escape hatch.
+    landed_costs: Mapped[list["LandedCostEntry"]] = relationship(
+        cascade="all, delete-orphan", passive_deletes=False
+    )
 
 
 class LandedCostEntry(Base):

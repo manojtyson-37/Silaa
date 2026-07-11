@@ -329,29 +329,26 @@ def delete_expense(id: int, db: Session = Depends(get_db)):
     if not exp:
         raise HTTPException(404, "Expense not found")
         
-    # Check for linked fabric lots
-    from app.fabric_inventory.models import FabricLot, FabricLedgerEntry
+    # Guard: refuse if any linked lot has been consumed (ledger entries beyond
+    # the initial GRN). Deleting the expense would otherwise orphan production
+    # history. Cascades on Expense.fabric_lots handle the actual cleanup.
+    from app.fabric_inventory.models import FabricLedgerEntry
     from sqlalchemy import select, func
-    
-    lots = db.scalars(select(FabricLot).where(FabricLot.expense_id == id)).all()
-    for lot in lots:
-        # Check if lot has been consumed (any ledger entries other than the initial GRN)
+
+    for lot in exp.fabric_lots:
         ledger_count = db.scalar(
             select(func.count())
             .select_from(FabricLedgerEntry)
             .where(FabricLedgerEntry.fabric_lot_id == lot.id)
         )
         if ledger_count > 1:
+            # ledger_count > 1 also implies CuttingRecords may exist (cutting
+            # always writes an issue ledger entry), so this guard covers them.
             raise HTTPException(409, "Cannot delete expense: The received fabric has already been consumed in production.")
-            
-        # Delete the GRN ledger entry and any landed costs, then the lot itself
-        from app.fabric_inventory.models import LandedCostEntry
-        db.execute(FabricLedgerEntry.__table__.delete().where(FabricLedgerEntry.fabric_lot_id == lot.id))
-        db.execute(LandedCostEntry.__table__.delete().where(LandedCostEntry.fabric_lot_id == lot.id))
-        db.delete(lot)
 
-    # No ORM relationship links Expense to FabricLot, so without a flush
-    # SQLAlchemy may emit DELETE expense before the lot deletes -> FK violation
-    db.flush()
-    db.delete(exp)
+    # Ledger rows are append-only at the ORM layer, so retracting the GRN
+    # entries requires a bulk table delete (the sanctioned escape hatch).
+    for lot in exp.fabric_lots:
+        db.execute(FabricLedgerEntry.__table__.delete().where(FabricLedgerEntry.fabric_lot_id == lot.id))
+    db.delete(exp)  # cascades to lots and their landed costs
     db.commit()

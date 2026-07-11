@@ -2,9 +2,10 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import Boolean, Date, ForeignKey, JSON, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+from app.fabric_inventory.models import FabricLot  # ensures "FabricLot" resolves when this module is imported alone
 
 
 class ExpenseCategory(Base):
@@ -43,3 +44,10 @@ class Expense(Base):
     paid_to: Mapped[str] = mapped_column(String, nullable=True)
     receipt_urls: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # Deleting an expense cascades to its procurement lots (and via FabricLot's
+    # own cascades, their ledger + landed-cost rows). Router still 409s first
+    # if any lot has been consumed in production.
+    fabric_lots: Mapped[list["FabricLot"]] = relationship(  # noqa: F821
+        cascade="all, delete-orphan", passive_deletes=False
+    )

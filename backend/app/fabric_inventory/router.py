@@ -114,9 +114,10 @@ def delete_fabric_item(item_id: int, db: Session = Depends(get_db)):
     from app.production.models import CuttingRecord
     lots = db.query(FabricLot).filter_by(fabric_item_id=item_id).all()
     for lot in lots:
+        # landed costs cascade from FabricLot; ledger rows are append-only so
+        # need the bulk-delete escape hatch; CuttingRecord has no relationship
         db.query(CuttingRecord).filter_by(fabric_lot_id=lot.id).delete()
         db.query(FabricLedgerEntry).filter_by(fabric_lot_id=lot.id).delete()
-        db.query(LandedCostEntry).filter_by(fabric_lot_id=lot.id).delete()
         db.delete(lot)
         
     db.delete(item)
@@ -189,9 +190,10 @@ def delete_fabric_lot(lot_id: int, db: Session = Depends(get_db), warehouse_id: 
         raise HTTPException(404, "FabricLot not found")
         
     from app.production.models import CuttingRecord
+    # landed costs cascade from FabricLot; ledger rows are append-only so
+    # need the bulk-delete escape hatch; CuttingRecord has no relationship
     db.query(CuttingRecord).filter_by(fabric_lot_id=lot_id).delete()
     db.query(FabricLedgerEntry).filter_by(fabric_lot_id=lot_id).delete()
-    db.query(LandedCostEntry).filter_by(fabric_lot_id=lot_id).delete()
 
     db.delete(lot)
     db.commit()
