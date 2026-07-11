@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
@@ -39,6 +40,10 @@ class SalesOrderOut(BaseModel):
     customer_state: Optional[str]
     invoice_number: Optional[str]
     status: str
+    created_at: Optional[datetime] = None
+    total_amount: Optional[str] = None
+
+    model_config = {"from_attributes": True}
 
 
 class SalesOrderUpdate(BaseModel):
@@ -64,7 +69,23 @@ def create_order(payload: SalesOrderIn, db: Session = Depends(get_db)):
 
 @router.get("/sales-orders", response_model=list[SalesOrderOut])
 def list_orders(db: Session = Depends(get_db)):
-    return db.query(SalesOrder).all()
+    orders = db.query(SalesOrder).order_by(SalesOrder.id.desc()).all()
+    lines = db.query(SalesOrderLine).all()
+    # group lines by order
+    lines_by_order: dict[int, list[SalesOrderLine]] = {}
+    for l in lines:
+        lines_by_order.setdefault(l.sales_order_id, []).append(l)
+
+    result = []
+    for order in orders:
+        total = sum(
+            l.qty * l.unit_price * (1 + l.gst_percent / 100)
+            for l in lines_by_order.get(order.id, [])
+        )
+        out = SalesOrderOut.model_validate(order)
+        out.total_amount = f"{total:.2f}" if total else None
+        result.append(out)
+    return result
 
 
 @router.get("/sales-orders/margins")

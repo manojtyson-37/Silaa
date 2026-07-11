@@ -158,6 +158,8 @@ export type SalesOrder = {
   customer_state: string | null;
   invoice_number: string | null;
   status: string;
+  created_at: string | null;
+  total_amount: string | null;
 };
 export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string; gst_percent: string };
 export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };

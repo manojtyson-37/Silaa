@@ -20,9 +20,11 @@ function lineAmount(l: Line) {
   return { taxable, tax, total: taxable + tax };
 }
 
-export default function NewSalesOrderForm() {
+type Props = { onClose?: () => void };
+
+export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!onClose); // controlled externally when onClose is passed
   const [styles, setStyles] = useState<StyleWithVariants[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -77,6 +79,7 @@ export default function NewSalesOrderForm() {
       setCustomerName(""); setCustomerPhone(""); setCustomerAddress(""); setCustomerState("");
       setLines([emptyLine()]);
       setOpen(false);
+      onClose?.();
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -85,16 +88,7 @@ export default function NewSalesOrderForm() {
     }
   };
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-sm font-medium bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors mb-5 cursor-pointer"
-      >
-        <Plus size={14} /> New Invoice
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div className="mb-6 border border-border rounded-xl bg-surface shadow-sm overflow-hidden">
@@ -104,7 +98,7 @@ export default function NewSalesOrderForm() {
           <FileText size={16} className="text-accent" />
           <span className="text-sm font-semibold text-foreground">New Invoice</span>
         </div>
-        <button onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => { setOpen(false); onClose?.(); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Cancel
         </button>
       </div>
@@ -217,7 +211,7 @@ export default function NewSalesOrderForm() {
 
         <div className="flex gap-2 border-t border-border pt-4">
           <Button onClick={submit} disabled={saving}>{saving ? "Saving…" : "Save as Draft"}</Button>
-          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => { setOpen(false); onClose?.(); }}>Cancel</Button>
         </div>
       </div>
     </div>

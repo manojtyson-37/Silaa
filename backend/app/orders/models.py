@@ -1,7 +1,8 @@
 import enum
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -29,6 +30,7 @@ class SalesOrder(Base):
     customer_state: Mapped[str] = mapped_column(String, nullable=True)
     invoice_number: Mapped[str] = mapped_column(String, nullable=True, unique=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default=SalesOrderStatus.DRAFT.value)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class SalesOrderLine(Base):
