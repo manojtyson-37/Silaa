@@ -66,10 +66,12 @@ export default function OrderActions({ orderId, status }: { orderId: number; sta
             <button onClick={cancel} className="text-sm font-medium text-muted-foreground hover:text-destructive cursor-pointer transition-colors duration-150">
               Cancel
             </button>
-            <button onClick={remove} className="text-sm font-medium text-muted-foreground hover:text-destructive cursor-pointer transition-colors duration-150">
-              Delete
-            </button>
           </>
+        )}
+        {(status === "cancelled" || status === "fulfilled") && (
+          <button onClick={remove} className="text-sm font-medium text-muted-foreground hover:text-destructive cursor-pointer transition-colors duration-150">
+            Delete
+          </button>
         )}
         <button onClick={downloadInvoice} className="text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors duration-150">
           Invoice

@@ -126,8 +126,12 @@ def delete_sales_order(order_id: int, db: Session = Depends(get_db)):
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
-    if order.status != SalesOrderStatus.DRAFT.value:
-        raise HTTPException(400, "Can only delete a SalesOrder in DRAFT status")
+    deletable = {SalesOrderStatus.DRAFT.value, SalesOrderStatus.CANCELLED.value, SalesOrderStatus.FULFILLED.value}
+    if order.status not in deletable:
+        raise HTTPException(400, f"Cannot delete a SalesOrder in '{order.status}' status")
+    if order.status == SalesOrderStatus.FULFILLED.value:
+        from app.finished_goods.models import FinishedGoodsLedgerEntry
+        db.query(FinishedGoodsLedgerEntry).filter_by(reference_type="sales_order", reference_id=order_id).delete()
     db.query(SalesOrderLine).filter_by(sales_order_id=order_id).delete()
     db.delete(order)
     db.commit()
