@@ -344,9 +344,14 @@ def delete_expense(id: int, db: Session = Depends(get_db)):
         if ledger_count > 1:
             raise HTTPException(409, "Cannot delete expense: The received fabric has already been consumed in production.")
             
-        # Delete the GRN ledger entry
+        # Delete the GRN ledger entry and any landed costs, then the lot itself
+        from app.fabric_inventory.models import LandedCostEntry
         db.execute(FabricLedgerEntry.__table__.delete().where(FabricLedgerEntry.fabric_lot_id == lot.id))
+        db.execute(LandedCostEntry.__table__.delete().where(LandedCostEntry.fabric_lot_id == lot.id))
         db.delete(lot)
-        
+
+    # No ORM relationship links Expense to FabricLot, so without a flush
+    # SQLAlchemy may emit DELETE expense before the lot deletes -> FK violation
+    db.flush()
     db.delete(exp)
     db.commit()

@@ -169,6 +169,7 @@ export default function ExpenseClient({
 
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [savingExp, setSavingExp] = useState(false);
 
   const receiptRef = useRef<HTMLInputElement>(null);
   const editReceiptRef = useRef<HTMLInputElement>(null);
@@ -306,6 +307,8 @@ export default function ExpenseClient({
   // ── Expense actions ────────────────────────────────────────────────────────
 
   const addExpense = async () => {
+    if (savingExp) return;
+    setSavingExp(true);
     setError(null);
     try {
       const isProcurement = catById[Number(expForm.category_id)]?.name.toLowerCase() === "procurement";
@@ -338,6 +341,7 @@ export default function ExpenseClient({
       setExpForm(BLANK_FORM());
       setExpOpen(false);
     } catch { setError("Failed to add expense."); }
+    finally { setSavingExp(false); }
   };
 
   const deleteExpense = async (exp: Expense) => {
@@ -908,8 +912,8 @@ export default function ExpenseClient({
             <div className="flex gap-2 pt-1">
               <Button
                 onClick={addExpense}
-                disabled={!expForm.category_id || !expForm.amount || !expForm.description}
-              >Save</Button>
+                disabled={savingExp || !expForm.category_id || !expForm.amount || !expForm.description}
+              >{savingExp ? "Saving…" : "Save"}</Button>
               <Button variant="ghost" onClick={() => setExpOpen(false)}>Cancel</Button>
             </div>
           </Card>
