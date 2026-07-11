@@ -18,6 +18,12 @@ export default function POClient({ orders, suppliers }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const supplierName = (id: number) => suppliers.find((s) => s.id === id)?.name ?? `#${id}`;
 
+  if (orders.length === 0) {
+    return (
+      <Card className="p-8 text-center text-muted-foreground text-sm mt-6">No purchase orders yet.</Card>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3 mt-6">
       {orders.map((po) => (
@@ -70,7 +76,7 @@ export default function POClient({ orders, suppliers }: Props) {
                     await api.delete(`/purchase-orders/${po.id}`, getClientToken());
                     setRefreshKey(k => k + 1);
                   } catch (err) {
-                    alert(String(err));
+                    alert(err instanceof Error ? err.message : "Delete failed");
                   }
                 }}
                 className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"

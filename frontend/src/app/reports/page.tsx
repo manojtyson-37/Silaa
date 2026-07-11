@@ -1,13 +1,18 @@
-import { api, FabricVarianceRow, WastageRejectionReport } from "@/lib/api";
+import { api, FabricVarianceRow, Style, Supplier, WastageRejectionReport } from "@/lib/api";
 import { Card, PageHeader, Table, Td, Th } from "@/components/ui";
 import { requireAuth } from "@/lib/serverAuth";
 
 export default async function ReportsPage() {
   const token = await requireAuth();
-  const [variance, wastage] = await Promise.all([
+  const [variance, wastage, styles, suppliers] = await Promise.all([
     api.get<FabricVarianceRow[]>("/reports/fabric-variance", token),
     api.get<WastageRejectionReport>("/reports/wastage", token),
+    api.get<Style[]>("/styles", token),
+    api.get<Supplier[]>("/suppliers", token),
   ]);
+
+  const styleMap = new Map(styles.map((s) => [s.id, s.name]));
+  const supplierMap = new Map(suppliers.map((s) => [s.id, s.name]));
 
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">
@@ -33,7 +38,7 @@ export default async function ReportsPage() {
             {variance.map((row) => (
               <tr key={row.cutting_record_id}>
                 <Td className="font-mono text-xs">#{row.production_order_id}</Td>
-                <Td>{row.style_id}</Td>
+                <Td>{styleMap.get(row.style_id) ?? `Style #${row.style_id}`}</Td>
                 <Td className="font-mono text-xs">#{row.fabric_lot_id}</Td>
                 <Td>{row.planned_fabric_qty}</Td>
                 <Td>{row.actual_fabric_qty}</Td>
@@ -50,18 +55,18 @@ export default async function ReportsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
         <ReportCard
           title="Wastage by style"
-          rows={wastage.wastage_by_style.map((r) => [`Style #${r.style_id}`, r.wastage_qty])}
+          rows={wastage.wastage_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, r.wastage_qty])}
         />
         <ReportCard
           title="Rejection by vendor"
           rows={wastage.rejection_by_vendor.map((r) => [
-            r.vendor_id ? `Vendor #${r.vendor_id}` : "In-house",
+            r.vendor_id ? (supplierMap.get(r.vendor_id) ?? `Vendor #${r.vendor_id}`) : "In-house",
             r.rejected_qty,
           ])}
         />
         <ReportCard
           title="Scrapped by style"
-          rows={wastage.scrapped_by_style.map((r) => [`Style #${r.style_id}`, r.scrapped_qty])}
+          rows={wastage.scrapped_by_style.map((r) => [styleMap.get(r.style_id) ?? `Style #${r.style_id}`, r.scrapped_qty])}
         />
       </div>
     </main>

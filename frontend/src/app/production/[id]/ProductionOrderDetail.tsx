@@ -98,7 +98,7 @@ export default function ProductionOrderDetail({
             {events.map((e, i) => (
               <li key={i} className="flex gap-3">
                 <span className="font-mono text-xs text-muted-foreground shrink-0 pt-0.5">
-                  {new Date(e.created_at).toLocaleString("en-US")}
+                  {new Date(e.created_at).toLocaleString("en-IN")}
                 </span>
                 <span className="text-foreground">{e.event_type}</span>
               </li>
@@ -159,7 +159,7 @@ function CuttingSection({
       onAdded({ id: result.id, ...form, fabric_lot_id: Number(form.fabric_lot_id) });
       setOpen(false);
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : "Unknown error");
     }
   };
 

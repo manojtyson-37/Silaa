@@ -15,7 +15,7 @@ export default function OrderActions({ orderId, status }: { orderId: number; sta
       await api.post(`/sales-orders/${orderId}/fulfill?created_by=web`, undefined, getClientToken());
       router.refresh();
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : "Action failed");
     }
   };
 
@@ -25,7 +25,7 @@ export default function OrderActions({ orderId, status }: { orderId: number; sta
       await api.post(`/sales-orders/${orderId}/cancel`, undefined, getClientToken());
       router.refresh();
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : "Action failed");
     }
   };
 
@@ -36,7 +36,7 @@ export default function OrderActions({ orderId, status }: { orderId: number; sta
       await api.delete(`/sales-orders/${orderId}`, getClientToken());
       router.refresh();
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : "Action failed");
     }
   };
 
@@ -51,7 +51,7 @@ export default function OrderActions({ orderId, status }: { orderId: number; sta
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : "Action failed");
     }
   };
 

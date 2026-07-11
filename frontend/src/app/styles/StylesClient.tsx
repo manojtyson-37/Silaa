@@ -42,7 +42,7 @@ export default function StylesClient({ styles, variantsByStyle }: Props) {
                       await api.delete(`/styles/${style.id}`, getClientToken());
                       setRefreshKey(k => k + 1);
                     } catch (err) {
-                      alert(String(err));
+                      alert(err instanceof Error ? err.message : "Delete failed");
                     }
                   }}
                   className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"

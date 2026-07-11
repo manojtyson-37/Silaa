@@ -13,12 +13,12 @@ export default async function SalesOrdersPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-8 py-10">
-      <PageHeader title="Sales Orders" subtitle={`${orders.length} order${orders.length === 1 ? "" : "s"}`} />
+      <PageHeader title="Invoices" subtitle={`${orders.length} invoice${orders.length === 1 ? "" : "s"}`} />
 
       <NewSalesOrderForm />
 
       {orders.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground text-sm">No sales orders yet.</Card>
+        <Card className="p-8 text-center text-muted-foreground text-sm">No invoices yet.</Card>
       ) : (
         <SOClient orders={orders} margins={margins} />
       )}

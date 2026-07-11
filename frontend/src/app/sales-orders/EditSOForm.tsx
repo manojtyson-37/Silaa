@@ -44,7 +44,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
       <button
         onClick={() => setEditing(true)}
         className="text-muted-foreground hover:text-foreground p-1 transition-colors"
-        title="Edit SO"
+        title="Edit Invoice"
       >
         <Edit2 size={16} />
       </button>
@@ -54,7 +54,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
   return (
     <Card className="p-4 bg-muted/30 flex flex-col gap-2.5 mb-3">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-medium text-sm">Edit customer name</h3>
+        <h3 className="font-medium text-sm">Edit invoice details</h3>
         <button onClick={() => setEditing(false)} className="text-muted-foreground hover:text-foreground p-1">
           <X size={14} />
         </button>

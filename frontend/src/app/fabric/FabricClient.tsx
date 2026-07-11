@@ -48,7 +48,7 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                       setRefreshKey(k => k + 1);
                     } catch (err) {
                       console.error("Upload failed", err);
-                      alert("Failed to upload image");
+                      alert(err instanceof Error ? err.message : "Failed to upload image");
                     }
                   }}
                 />
@@ -88,7 +88,7 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                             await api.delete(`/fabric-items/${item.id}`, getClientToken());
                             setRefreshKey(k => k + 1);
                           } catch (err) {
-                            alert(String(err));
+                            alert(err instanceof Error ? err.message : "Delete failed");
                           }
                         }}
                         className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
@@ -171,7 +171,7 @@ export default function FabricClient({ fabricItems, lots, suppliers }: Props) {
                                     await api.delete(`/fabric-lots/${lot.id}`, getClientToken());
                                     setRefreshKey(k => k + 1);
                                   } catch (err) {
-                                    alert(String(err));
+                                    alert(err instanceof Error ? err.message : "Delete failed");
                                   }
                                 }}
                                 className="text-muted-foreground hover:text-destructive cursor-pointer"
