@@ -355,10 +355,12 @@ export default function ExpenseClient({
       await api.delete(`/expenses/${exp.id}`, getClientToken());
       setExpenses(e => e.filter(x => x.id !== exp.id));
     } catch (e: unknown) {
-      if (e instanceof Error && e.message.includes("409")) {
-        setError("Cannot delete expense: The received fabric has already been consumed in production.");
+      if (e instanceof Error) {
+        // api errors look like "409 /expenses/13: <detail>" — show just the detail
+        const detail = e.message.replace(/^\d+ \S+: /, "");
+        setError(`Could not delete expense: ${detail}`);
       } else {
-        setError("Failed to delete expense.");
+        setError("Could not delete expense. Please try again.");
       }
     }
   };
