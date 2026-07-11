@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_default_warehouse_id
@@ -239,9 +239,10 @@ def add_landed_cost(lot_id: int, payload: LandedCostIn, db: Session = Depends(ge
 
 
 class ReadyStockIn(BaseModel):
+    fabric_item_id: int
     variant_id: int
-    qty_pieces: Decimal
-    fabric_qty_used: Decimal
+    qty_pieces: Decimal = Field(gt=0)
+    fabric_qty_used: Decimal = Field(gt=0)
     created_by: str
 
 
@@ -255,9 +256,11 @@ def log_ready_stock(
     from app.fabric_inventory.models import FabricLedgerEntry
     from app.finished_goods.service import record_movement
 
-    lot = db.get(FabricLot, lot_id)
+    lot = db.query(FabricLot).filter_by(id=lot_id).with_for_update().one_or_none()
     if lot is None:
         raise HTTPException(404, "FabricLot not found")
+    if lot.fabric_item_id != payload.fabric_item_id:
+        raise HTTPException(403, "Lot does not belong to the specified fabric item")
 
     balance = fabric_balance(db, lot_id, warehouse_id)
     if payload.fabric_qty_used > balance:

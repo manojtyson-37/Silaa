@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { api, FabricLotWithBalance, StyleWithVariants } from "@/lib/api";
+import { api, decodeToken, FabricLotWithBalance, StyleWithVariants } from "@/lib/api";
 import { Button, Input, Select } from "@/components/ui";
 import { getClientToken } from "@/lib/clientAuth";
 import { Package } from "lucide-react";
@@ -17,7 +17,7 @@ export default function LogReadyStockForm({ fabricItemId, lots, onDone }: Props)
   const [styles, setStyles] = useState<StyleWithVariants[]>([]);
   const [selectedStyleId, setSelectedStyleId] = useState("");
   const [variantId, setVariantId] = useState("");
-  const [lotId, setLotId] = useState(lots[0]?.id.toString() ?? "");
+  const [lotId, setLotId] = useState("");
   const [qtyPieces, setQtyPieces] = useState("");
   const [fabricQty, setFabricQty] = useState("");
   const [saving, setSaving] = useState(false);
@@ -32,7 +32,7 @@ export default function LogReadyStockForm({ fabricItemId, lots, onDone }: Props)
         setStyles(data);
         if (itemLots[0]) setLotId(itemLots[0].id.toString());
       } catch (e) {
-        setErr(String(e));
+        setErr(e instanceof Error ? e.message : "Unknown error");
       }
     }
     setOpen(o => !o);
@@ -50,12 +50,15 @@ export default function LogReadyStockForm({ fabricItemId, lots, onDone }: Props)
     setSaving(true);
     setErr("");
     try {
+      const token = getClientToken();
+      const createdBy = token ? (decodeToken(token).sub ?? "unknown") : "unknown";
       await api.post(`/fabric-lots/${lotId}/log-ready-stock`, {
+        fabric_item_id: fabricItemId,
         variant_id: Number(variantId),
         qty_pieces: parseFloat(qtyPieces),
         fabric_qty_used: parseFloat(fabricQty),
-        created_by: "admin",
-      }, getClientToken());
+        created_by: createdBy,
+      }, token);
       setOpen(false);
       setQtyPieces("");
       setFabricQty("");
@@ -63,7 +66,7 @@ export default function LogReadyStockForm({ fabricItemId, lots, onDone }: Props)
       setSelectedStyleId("");
       onDone();
     } catch (e) {
-      setErr(String(e));
+      setErr(e instanceof Error ? e.message : "Unknown error");
     } finally {
       setSaving(false);
     }
