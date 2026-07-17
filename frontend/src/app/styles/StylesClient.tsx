@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { Style, StyleVariant, api } from "@/lib/api";
+import { Style, StyleVariant, FabricItem, api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 import { Card, Table, Th } from "@/components/ui";
 import EditStyleForm from "./EditStyleForm";
@@ -12,9 +12,10 @@ import EditVariantRow from "./EditVariantRow";
 type Props = {
   styles: Style[];
   variantsByStyle: StyleVariant[][];
+  fabrics: FabricItem[];
 };
 
-export default function StylesClient({ styles, variantsByStyle }: Props) {
+export default function StylesClient({ styles, variantsByStyle, fabrics }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
@@ -63,17 +64,20 @@ export default function StylesClient({ styles, variantsByStyle }: Props) {
                 <Th>Color</Th>
                 <Th>Size</Th>
                 <Th>Qty</Th>
+                <Th>Fabric</Th>
+                <Th>Consumption</Th>
+                <Th>Cost Price (₹)</Th>
                 <Th>Status</Th>
                 <Th> </Th>
               </tr>
             </thead>
             <tbody>
               {variantsByStyle[i].map((v) => (
-                <EditVariantRow key={v.id} v={v} />
+                <EditVariantRow key={v.id} v={v} fabrics={fabrics} />
               ))}
             </tbody>
           </Table>
-          <NewVariantForm styleId={style.id} />
+          <NewVariantForm styleId={style.id} fabrics={fabrics} />
         </Card>
       ))}
     </div>

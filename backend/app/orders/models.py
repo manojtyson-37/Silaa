@@ -12,6 +12,8 @@ class SalesOrderStatus(str, enum.Enum):
     DRAFT = "draft"
     FULFILLED = "fulfilled"
     CANCELLED = "cancelled"
+    RETURNED = "returned"
+    REPLACED = "replaced"
 
 
 class SalesOrder(Base):
@@ -28,6 +30,7 @@ class SalesOrder(Base):
     customer_phone: Mapped[str] = mapped_column(String, nullable=True)
     customer_address: Mapped[str] = mapped_column(String, nullable=True)
     customer_state: Mapped[str] = mapped_column(String, nullable=True)
+    category: Mapped[str] = mapped_column(String, nullable=True)
     invoice_number: Mapped[str] = mapped_column(String, nullable=True, unique=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default=SalesOrderStatus.DRAFT.value)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -325,7 +325,8 @@ def update_expense(id: int, payload: ExpenseUpdate, db: Session = Depends(get_db
 
 @router.delete("/expenses/{id}", status_code=204)
 def delete_expense(id: int, db: Session = Depends(get_db)):
-    exp = db.get(Expense, id)
+    from sqlalchemy.orm import selectinload
+    exp = db.query(Expense).options(selectinload(Expense.fabric_lots)).filter_by(id=id).first()
     if not exp:
         raise HTTPException(404, "Expense not found")
         

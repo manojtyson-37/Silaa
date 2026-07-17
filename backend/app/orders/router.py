@@ -11,7 +11,7 @@ from app.core.deps import get_default_warehouse_id
 from app.db import get_db
 from app.orders.invoice import generate_invoice_pdf
 from app.orders.models import SalesOrder, SalesOrderLine, SalesOrderStatus
-from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order
+from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order, return_order, replace_order
 
 router = APIRouter(tags=["orders"])
 
@@ -178,12 +178,47 @@ def fulfill(
 
 
 @router.post("/sales-orders/{order_id}/cancel", response_model=SalesOrderOut)
-def cancel(order_id: int, db: Session = Depends(get_db)):
+def cancel(
+    order_id: int,
+    db: Session = Depends(get_db),
+):
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
     try:
         cancel_order(db, order=order)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return order
+
+
+@router.post("/sales-orders/{order_id}/return", response_model=SalesOrderOut)
+def return_order_endpoint(
+    order_id: int,
+    created_by: str,
+    db: Session = Depends(get_db),
+):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    try:
+        return_order(db, order=order, created_by=created_by)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return order
+
+
+@router.post("/sales-orders/{order_id}/replace", response_model=SalesOrderOut)
+def replace_order_endpoint(
+    order_id: int,
+    created_by: str,
+    db: Session = Depends(get_db),
+):
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise HTTPException(404, "SalesOrder not found")
+    try:
+        replace_order(db, order=order, created_by=created_by)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return order

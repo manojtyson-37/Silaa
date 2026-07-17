@@ -12,7 +12,7 @@ type Props = {
   margins: OrderMarginTotal[];
 };
 
-const STATUS_OPTIONS = ["all", "draft", "fulfilled", "cancelled"];
+const STATUS_OPTIONS = ["all", "draft", "fulfilled", "cancelled", "returned", "replaced"];
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
@@ -28,6 +28,8 @@ const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
   fulfilled: "Paid",
   cancelled: "Cancelled",
+  returned: "Returned",
+  replaced: "Replaced",
 };
 
 export default function SOClient({ orders, margins }: Props) {
@@ -90,6 +92,7 @@ export default function SOClient({ orders, margins }: Props) {
             <tr className="border-b border-border bg-muted/40 text-xs text-muted-foreground text-left">
               <th className="px-5 py-3 font-medium">Invoice No.</th>
               <th className="px-4 py-3 font-medium">Client</th>
+              <th className="px-4 py-3 font-medium">Category</th>
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 font-medium text-right">Total</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -99,7 +102,7 @@ export default function SOClient({ orders, margins }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted-foreground">
                   No invoices match your search.
                 </td>
               </tr>
@@ -118,6 +121,9 @@ export default function SOClient({ orders, margins }: Props) {
                         <EditSOForm order={order} onSaved={() => setRefreshKey((k) => k + 1)} />
                       )}
                     </div>
+                  </td>
+                  <td className="px-4 py-3.5 text-muted-foreground text-xs">
+                    {order.category || "—"}
                   </td>
                   <td className="px-4 py-3.5 text-muted-foreground text-xs">
                     {fmtDate(order.created_at)}
@@ -156,6 +162,8 @@ function InvoiceStatusPill({ status }: { status: string }) {
     draft:      { label: "Draft",      cls: "bg-slate-100 text-slate-600 border-slate-200" },
     fulfilled:  { label: "Paid",       cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
     cancelled:  { label: "Cancelled",  cls: "bg-red-50 text-red-600 border-red-200" },
+    returned:   { label: "Returned",   cls: "bg-amber-50 text-amber-700 border-amber-200" },
+    replaced:   { label: "Replaced",   cls: "bg-blue-50 text-blue-700 border-blue-200" },
   };
   const { label, cls } = map[status] ?? { label: status, cls: "bg-muted text-muted-foreground border-border" };
   return (

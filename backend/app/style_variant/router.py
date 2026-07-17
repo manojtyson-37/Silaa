@@ -37,6 +37,9 @@ class VariantIn(BaseModel):
     qty: int = 0
     barcode: Optional[str] = None
     selling_price: Optional[Decimal] = None
+    fabric_item_id: Optional[int] = None
+    fabric_consumption: Optional[Decimal] = None
+    cost_price: Optional[Decimal] = None
 
 
 class VariantUpdate(BaseModel):
@@ -47,6 +50,9 @@ class VariantUpdate(BaseModel):
     status: Optional[str] = None
     barcode: Optional[str] = None
     selling_price: Optional[Decimal] = None
+    fabric_item_id: Optional[int] = None
+    fabric_consumption: Optional[Decimal] = None
+    cost_price: Optional[Decimal] = None
 
 
 class VariantOut(VariantIn):

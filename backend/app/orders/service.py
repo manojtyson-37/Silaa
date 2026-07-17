@@ -58,9 +58,32 @@ def fulfill_order(
     for line in lines:
         balance = fg_balance(session, line.variant_id, warehouse_id)
         if line.qty > balance:
-            raise InsufficientStockError(
-                f"Variant {line.variant_id}: requested {line.qty}, available {balance}"
-            )
+            from app.style_variant.models import StyleVariant
+            variant = session.get(StyleVariant, line.variant_id)
+            if variant and variant.qty >= line.qty:
+                adjustment_qty = variant.qty - balance
+                if adjustment_qty > 0:
+                    record_movement(
+                        session,
+                        variant_id=line.variant_id,
+                        qty=adjustment_qty,
+                        direction=Direction.IN,
+                        txn_type="adjustment",
+                        warehouse_id=warehouse_id,
+                        reason_code="auto_sync",
+                        created_by=created_by,
+                        commit=False,
+                    )
+                    balance = variant.qty
+            if line.qty > balance:
+                raise InsufficientStockError(
+                    f"Variant {line.variant_id}: requested {line.qty}, available {balance}"
+                )
+            
+        # Keep StyleVariant.qty in sync
+        variant = session.get(StyleVariant, line.variant_id)
+        if variant:
+            variant.qty -= int(line.qty)
 
     for line in lines:
         record_movement(
@@ -89,5 +112,67 @@ def cancel_order(session: Session, *, order: SalesOrder) -> SalesOrder:
     if order.status != SalesOrderStatus.DRAFT.value:
         raise ValueError(f"Cannot cancel order in status {order.status}")
     order.status = SalesOrderStatus.CANCELLED.value
+    session.commit()
+    return order
+
+
+def return_order(session: Session, *, order: SalesOrder, created_by: str) -> SalesOrder:
+    if order.status != SalesOrderStatus.FULFILLED.value:
+        raise ValueError(f"Cannot return order in status {order.status}")
+    
+    order.status = SalesOrderStatus.RETURNED.value
+    
+    # Restock inventory
+    lines = session.query(SalesOrderLine).filter_by(sales_order_id=order.id).all()
+    from app.style_variant.models import StyleVariant
+    for line in lines:
+        record_movement(
+            session,
+            variant_id=line.variant_id,
+            qty=line.qty,
+            direction=Direction.IN,
+            txn_type="return",
+            warehouse_id=1,  # Default warehouse for now
+            reason_code=None,
+            reference_type="sales_order",
+            reference_id=order.id,
+            created_by=created_by,
+            commit=False,
+        )
+        variant = session.get(StyleVariant, line.variant_id)
+        if variant:
+            variant.qty += int(line.qty)
+            
+    session.commit()
+    return order
+
+
+def replace_order(session: Session, *, order: SalesOrder, created_by: str) -> SalesOrder:
+    if order.status != SalesOrderStatus.FULFILLED.value:
+        raise ValueError(f"Cannot replace order in status {order.status}")
+    
+    order.status = SalesOrderStatus.REPLACED.value
+    
+    # Restock inventory just like return
+    lines = session.query(SalesOrderLine).filter_by(sales_order_id=order.id).all()
+    from app.style_variant.models import StyleVariant
+    for line in lines:
+        record_movement(
+            session,
+            variant_id=line.variant_id,
+            qty=line.qty,
+            direction=Direction.IN,
+            txn_type="replacement",
+            warehouse_id=1,  # Default warehouse for now
+            reason_code=None,
+            reference_type="sales_order",
+            reference_id=order.id,
+            created_by=created_by,
+            commit=False,
+        )
+        variant = session.get(StyleVariant, line.variant_id)
+        if variant:
+            variant.qty += int(line.qty)
+            
     session.commit()
     return order

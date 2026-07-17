@@ -31,6 +31,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerState, setCustomerState] = useState("");
+  const [category, setCategory] = useState("B2C");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
         customer_phone: customerPhone || null,
         customer_address: customerAddress || null,
         customer_state: customerState || null,
+        category: category,
         lines: validLines.map((l) => ({
           variant_id: Number(l.variant_id),
           qty: l.qty,
@@ -113,6 +115,10 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
             <Select value={customerState} onChange={(e) => setCustomerState(e.target.value)}>
               <option value="">State (for GST)</option>
               {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </Select>
+            <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="B2C">B2C</option>
+              <option value="B2B">B2B</option>
             </Select>
           </div>
         </div>

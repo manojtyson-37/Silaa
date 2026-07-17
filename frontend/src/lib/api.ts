@@ -112,6 +112,9 @@ export type StyleVariant = {
   sku_code: string;
   qty: number;
   status: string;
+  fabric_item_id?: number | null;
+  fabric_consumption?: string | null;
+  cost_price?: string | null;
 };
 
 export type ProductionOrder = {
@@ -156,6 +159,7 @@ export type SalesOrder = {
   customer_phone: string | null;
   customer_address: string | null;
   customer_state: string | null;
+  category: string | null;
   invoice_number: string | null;
   status: string;
   created_at: string | null;

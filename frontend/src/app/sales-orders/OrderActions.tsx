@@ -49,6 +49,28 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
     } finally { setLoading(false); }
   };
 
+  const returnOrder = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post(`/sales-orders/${orderId}/return?created_by=web`, undefined, getClientToken());
+      refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Action failed");
+    } finally { setLoading(false); }
+  };
+
+  const replaceOrder = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post(`/sales-orders/${orderId}/replace?created_by=web`, undefined, getClientToken());
+      refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Action failed");
+    } finally { setLoading(false); }
+  };
+
   const downloadInvoice = async () => {
     setError(null);
     try {
@@ -97,9 +119,30 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
             </button>
           </>
         )}
+        
+        {status === "fulfilled" && (
+          <>
+            <button
+              onClick={returnOrder}
+              disabled={loading}
+              title="Mark as returned"
+              className="px-2.5 py-1 text-xs font-medium rounded text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Return
+            </button>
+            <button
+              onClick={replaceOrder}
+              disabled={loading}
+              title="Mark as replaced"
+              className="px-2.5 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Replace
+            </button>
+          </>
+        )}
 
-        {/* Delete — for cancelled and fulfilled */}
-        {(status === "cancelled" || status === "fulfilled") && (
+        {/* Delete — for cancelled, fulfilled, returned, replaced, AND draft */}
+        {(status === "draft" || status === "cancelled" || status === "fulfilled" || status === "returned" || status === "replaced") && (
           <button
             onClick={remove}
             disabled={loading}
