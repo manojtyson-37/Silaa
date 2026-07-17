@@ -76,9 +76,8 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-1">
-        {/* Print/PDF */}
+    <div className="flex items-center gap-2">
+      {/* Print/PDF */}
         <button
           onClick={downloadInvoice}
           title="Download invoice PDF"
@@ -141,8 +140,8 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
             <Trash2 size={15} />
           </button>
         )}
-      </div>
-      {error && <p className="text-xs text-destructive max-w-40 text-right">{error}</p>}
+      
+      {error && <div className="text-xs text-red-500 font-medium absolute -bottom-5 right-0 whitespace-nowrap">{error}</div>}
     </div>
   );
 }

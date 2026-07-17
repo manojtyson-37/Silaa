@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
-import { StatusPill } from "@/components/ui";
+import { StatusPill, Card } from "@/components/ui";
 import OrderActions from "./OrderActions";
 import EditSOForm from "./EditSOForm";
 
@@ -85,67 +85,55 @@ export default function SOClient({ orders, margins }: Props) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="border border-border rounded-xl overflow-hidden bg-surface shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/40 text-xs text-muted-foreground text-left">
-              <th className="px-5 py-3 font-medium">Invoice No.</th>
-              <th className="px-4 py-3 font-medium">Client</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium text-right">Total</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted-foreground">
-                  No invoices match your search.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((order) => (
-                <tr key={`${order.id}-${refreshKey}`} className="border-t border-border/60 hover:bg-muted/20 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <span className="font-mono text-xs font-medium text-accent">
-                      {order.invoice_number ?? `#${order.id}`}
+      {/* Card List Layout */}
+      <div className="flex flex-col gap-3 mt-6">
+        {filtered.length === 0 ? (
+          <Card className="p-8 text-center text-muted-foreground text-sm">
+            No invoices match your search.
+          </Card>
+        ) : (
+          filtered.map((order) => (
+            <Card key={`${order.id}-${refreshKey}`} className="px-5 py-4 flex items-center justify-between group hover:border-accent hover:shadow-sm transition-all duration-200">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
+                  <span className="text-xs text-muted-foreground font-medium">SO</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-foreground">
+                      {order.invoice_number ?? `SO-${order.id}`}
                     </span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-foreground font-medium">{order.customer_name}</span>
-                      {order.status === "draft" && (
+                    <span className="text-muted-foreground font-normal">·</span>
+                    <span className="text-sm font-medium">
+                      {order.customer_name}
+                    </span>
+                    {order.status === "draft" && (
+                      <div className="ml-2">
                         <EditSOForm order={order} onSaved={() => setRefreshKey((k) => k + 1)} />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-muted-foreground text-xs">
-                    {order.category || "—"}
-                  </td>
-                  <td className="px-4 py-3.5 text-muted-foreground text-xs">
-                    {fmtDate(order.created_at)}
-                  </td>
-                  <td className="px-4 py-3.5 text-right tnum font-medium text-foreground">
-                    {fmtAmount(order.total_amount)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <InvoiceStatusPill status={order.status} />
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <OrderActions
-                      orderId={order.id}
-                      status={order.status}
-                      onRefresh={() => setRefreshKey((k) => k + 1)}
-                    />
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-sm truncate">
+                    Category: {order.category || "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Date: {fmtDate(order.created_at)} · Total: <span className="font-medium text-foreground">{fmtAmount(order.total_amount)}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 relative">
+                <InvoiceStatusPill status={order.status} />
+                <div className="flex items-center gap-2">
+                  <OrderActions
+                    orderId={order.id}
+                    status={order.status}
+                    onRefresh={() => setRefreshKey((k) => k + 1)}
+                  />
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
 
       {filtered.length > 0 && (
