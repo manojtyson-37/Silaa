@@ -142,12 +142,12 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
           
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Items</p>
-            <div className="flex gap-2">
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs py-1 h-7 bg-muted/30">
+            <div className="flex gap-3">
+              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="min-w-[140px]">
                 <option value="">All Categories</option>
                 {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
               </Select>
-              <Select value={collectionFilter} onChange={(e) => setCollectionFilter(e.target.value)} className="text-xs py-1 h-7 bg-muted/30">
+              <Select value={collectionFilter} onChange={(e) => setCollectionFilter(e.target.value)} className="min-w-[140px]">
                 <option value="">All Collections</option>
                 {uniqueCollections.map(c => <option key={c} value={c}>{c}</option>)}
               </Select>
