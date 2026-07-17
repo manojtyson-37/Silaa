@@ -57,10 +57,11 @@ def fulfill_order(
 
     lines = session.query(SalesOrderLine).filter_by(sales_order_id=order.id).all()
 
+    from app.style_variant.models import StyleVariant
+
     for line in lines:
         balance = fg_balance(session, line.variant_id, warehouse_id)
         if line.qty > balance:
-            from app.style_variant.models import StyleVariant
             variant = session.get(StyleVariant, line.variant_id)
             if variant and variant.qty >= line.qty:
                 adjustment_qty = variant.qty - balance
