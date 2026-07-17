@@ -79,10 +79,10 @@ def fulfill_order(
                     balance = variant.qty
             if line.qty > balance:
                 if not variant:
-                    raise InsufficientStockError(f"Variant {line.variant_id} no longer exists. Please edit the invoice and select a valid variant.")
+                    raise InsufficientStockError(f"Variant ID {line.variant_id} no longer exists. Please edit the invoice and select a valid variant.")
                 variant_name = f"{variant.color} {variant.size}"
                 raise InsufficientStockError(
-                    f"Variant {line.variant_id} ({variant_name}): requested {line.qty}, available {balance}"
+                    f"Variant ID {line.variant_id} ({variant_name}): requested {line.qty}, available {balance}"
                 )
             
         # Keep StyleVariant.qty in sync
