@@ -44,6 +44,7 @@ class SalesOrderOut(BaseModel):
     status: str
     created_at: Optional[datetime] = None
     total_amount: Optional[str] = None
+    has_stock_issue: Optional[bool] = False
 
     model_config = {"from_attributes": True}
 
@@ -80,14 +81,30 @@ def list_orders(db: Session = Depends(get_db)):
     for l in lines:
         lines_by_order.setdefault(l.sales_order_id, []).append(l)
 
+    variants = db.query(StyleVariant).all()
+    variant_qty_map = {v.id: v.qty for v in variants}
+
     result = []
     for order in orders:
+        order_lines = lines_by_order.get(order.id, [])
         total = sum(
             l.qty * l.unit_price * (1 + l.gst_percent / 100)
-            for l in lines_by_order.get(order.id, [])
+            for l in order_lines
         )
         out = SalesOrderOut.model_validate(order)
         out.total_amount = f"{total:.2f}" if total else None
+        
+        has_issue = False
+        if order.status == "draft":
+            order_variant_qty = {}
+            for l in order_lines:
+                order_variant_qty[l.variant_id] = order_variant_qty.get(l.variant_id, Decimal("0")) + l.qty
+            for vid, required_qty in order_variant_qty.items():
+                if vid not in variant_qty_map or required_qty > variant_qty_map[vid]:
+                    has_issue = True
+                    break
+        out.has_stock_issue = has_issue
+        
         result.append(out)
     return result
 

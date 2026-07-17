@@ -6,7 +6,7 @@ import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
 import OrderActions from "./OrderActions";
-import { Edit2 } from "lucide-react";
+import { Edit2, AlertTriangle } from "lucide-react";
 
 type Props = {
   orders: SalesOrder[];
@@ -136,8 +136,13 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                         <Edit2 size={16} />
                       </button>
                     )}
-                    <div className="ml-2">
+                    <div className="ml-2 flex items-center gap-2">
                       <InvoiceStatusPill status={order.status} />
+                      {order.has_stock_issue && (
+                        <div title="Stock unavailable or missing for one or more variants" className="text-amber-500 bg-amber-500/10 p-1 rounded-full">
+                          <AlertTriangle size={14} strokeWidth={2.5} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground max-w-sm truncate">
