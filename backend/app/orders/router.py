@@ -12,6 +12,7 @@ from app.db import get_db
 from app.orders.invoice import generate_invoice_pdf
 from app.orders.models import SalesOrder, SalesOrderLine, SalesOrderStatus
 from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order, return_order, replace_order
+from app.style_variant.models import StyleVariant
 
 router = APIRouter(tags=["orders"])
 
