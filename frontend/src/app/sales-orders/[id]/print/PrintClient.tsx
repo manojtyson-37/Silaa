@@ -12,13 +12,13 @@ type SalesOrderOut = {
   status: string;
   category?: string;
   created_at: string;
-  total_amount: number;
+  total_amount: string | number;
   lines: {
     id: number;
     variant_id: number;
-    qty: number;
-    unit_price: number;
-    gst_percent: number;
+    qty: string | number;
+    unit_price: string | number;
+    gst_percent: string | number;
     variant_color: string;
     variant_size: string;
     variant_sku: string;
@@ -108,7 +108,9 @@ export default function PrintClient({ order }: Props) {
           </thead>
           <tbody>
             {order.lines.map((l, i) => {
-              const amt = l.qty * l.unit_price;
+              const qty = Number(l.qty) || 0;
+              const unitPrice = Number(l.unit_price) || 0;
+              const amt = qty * unitPrice;
               return (
                 <tr key={l.id}>
                   <td style={{ color: "#71717a" }}>{i + 1}</td>
@@ -116,8 +118,8 @@ export default function PrintClient({ order }: Props) {
                     <div style={{ fontWeight: 500 }}>{l.variant_sku || `Variant #${l.variant_id}`}</div>
                     <div style={{ fontSize: 11, color: "#71717a" }}>{l.variant_color} {l.variant_size}</div>
                   </td>
-                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{l.qty}</td>
-                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>₹{l.unit_price.toFixed(2)}</td>
+                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{qty}</td>
+                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>₹{unitPrice.toFixed(2)}</td>
                   <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>₹{amt.toFixed(2)}</td>
                 </tr>
               );
@@ -130,7 +132,7 @@ export default function PrintClient({ order }: Props) {
           <div style={{ minWidth: 260 }}>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 12px", fontSize: 15, fontWeight: 700, borderTop: "2px solid #111", marginTop: 4 }}>
               <span>Total Amount</span>
-              <span>₹{order.total_amount.toFixed(2)}</span>
+              <span>₹{(Number(order.total_amount) || 0).toFixed(2)}</span>
             </div>
           </div>
         </div>

@@ -6,7 +6,8 @@ import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
 import OrderActions from "./OrderActions";
-import { Edit2 } from "lucide-react";
+import { Edit2, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
   orders: SalesOrder[];
@@ -154,6 +155,9 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                     onRefresh={handleRefresh}
                     onDelete={() => handleDelete(order.id)}
                   />
+                  <Link href={`/sales-orders/${order.id}/print`} className="text-muted-foreground hover:text-foreground transition-colors ml-2" title="Preview Invoice">
+                    <ExternalLink size={16} />
+                  </Link>
                 </div>
               </div>
             </Card>
