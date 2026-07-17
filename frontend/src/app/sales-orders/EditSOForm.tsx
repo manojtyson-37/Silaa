@@ -17,6 +17,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
   const [customer_phone, setCustomerPhone] = useState(order.customer_phone ?? "");
   const [customer_address, setCustomerAddress] = useState(order.customer_address ?? "");
   const [customer_state, setCustomerState] = useState(order.customer_state ?? "");
+  const [category, setCategory] = useState(order.category ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +30,7 @@ export default function EditSOForm({ order, onSaved }: Props) {
         customer_phone: customer_phone || null,
         customer_address: customer_address || null,
         customer_state: customer_state || null,
+        category: category || null,
       }, getClientToken());
       setEditing(false);
       onSaved();
@@ -79,6 +81,11 @@ export default function EditSOForm({ order, onSaved }: Props) {
         <option value="">Customer state (for GST)</option>
         {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
       </Select>
+      <Input
+        placeholder="Category"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      />
 
       {error && <p className="text-xs text-red-600">{error}</p>}
 
