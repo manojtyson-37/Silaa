@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
@@ -33,9 +34,15 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function SOClient({ orders, margins }: Props) {
+  const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const handleRefresh = () => {
+    setRefreshKey(k => k + 1);
+    router.refresh();
+  };
 
   const marginByOrderId = useMemo(
     () => Object.fromEntries(margins.map((m) => [m.order_id, m])),
@@ -109,7 +116,7 @@ export default function SOClient({ orders, margins }: Props) {
                     </span>
                     {order.status === "draft" && (
                       <div className="ml-2">
-                        <EditSOForm order={order} onSaved={() => setRefreshKey((k) => k + 1)} />
+                        <EditSOForm order={order} onSaved={handleRefresh} />
                       </div>
                     )}
                   </div>
@@ -127,7 +134,7 @@ export default function SOClient({ orders, margins }: Props) {
                   <OrderActions
                     orderId={order.id}
                     status={order.status}
-                    onRefresh={() => setRefreshKey((k) => k + 1)}
+                    onRefresh={handleRefresh}
                   />
                 </div>
               </div>
