@@ -13,6 +13,7 @@ type Props = {
 
 export default function InvoicesPageClient({ orders, margins }: Props) {
   const [showForm, setShowForm] = useState(false);
+  const [editOrderId, setEditOrderId] = useState<number | null>(null);
 
   return (
     <>
@@ -22,7 +23,7 @@ export default function InvoicesPageClient({ orders, margins }: Props) {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Invoices</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Create, track and print GST invoices</p>
         </div>
-        {!showForm && (
+        {(!showForm && !editOrderId) && (
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-2 text-sm font-semibold bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors cursor-pointer shrink-0"
@@ -32,13 +33,16 @@ export default function InvoicesPageClient({ orders, margins }: Props) {
         )}
       </div>
 
-      {/* Inline new-invoice form */}
-      {showForm && (
-        <NewInvoiceForm onClose={() => setShowForm(false)} />
+      {/* Inline new/edit invoice form */}
+      {(showForm || editOrderId) && (
+        <NewInvoiceForm 
+          initialOrderId={editOrderId || undefined} 
+          onClose={() => { setShowForm(false); setEditOrderId(null); }} 
+        />
       )}
 
       {/* Table */}
-      <SOClient orders={orders} margins={margins} />
+      <SOClient orders={orders} margins={margins} onEdit={(id) => setEditOrderId(id)} />
     </>
   );
 }

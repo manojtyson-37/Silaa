@@ -6,9 +6,14 @@ import { Printer, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 
-type Props = { orderId: number; status: string; onRefresh?: () => void };
+type Props = {
+  orderId: number;
+  status: string;
+  onRefresh?: () => void;
+  onDelete?: () => void;
+};
 
-export default function OrderActions({ orderId, status, onRefresh }: Props) {
+export default function OrderActions({ orderId, status, onRefresh, onDelete }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +48,7 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
     setLoading(true);
     try {
       await api.delete(`/sales-orders/${orderId}`, getClientToken());
+      onDelete?.();
       refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Action failed");

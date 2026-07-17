@@ -20,11 +20,12 @@ function lineAmount(l: Line) {
   return { taxable, tax, total: taxable + tax };
 }
 
-type Props = { onClose?: () => void };
+type Props = { initialOrderId?: number; onClose?: () => void };
 
-export default function NewSalesOrderForm({ onClose }: Props = {}) {
+export default function NewSalesOrderForm({ initialOrderId, onClose }: Props = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
+  const [loadingOrder, setLoadingOrder] = useState(!!initialOrderId);
   const [styles, setStyles] = useState<StyleWithVariants[]>([]);
   const [stylesError, setStylesError] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -51,9 +52,44 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
 
   useEffect(() => {
     api.get<StyleWithVariants[]>("/styles-with-variants", getClientToken())
-      .then((data) => { setStyles(data); setStylesError(null); })
+      .then((data) => { 
+        setStyles(data); 
+        setStylesError(null); 
+        
+        if (initialOrderId) {
+           api.get<any>(`/sales-orders/${initialOrderId}`, getClientToken())
+             .then(orderData => {
+                 setCustomerName(orderData.customer_name);
+                 setCustomerPhone(orderData.customer_phone || "");
+                 setCustomerAddress(orderData.customer_address || "");
+                 setCustomerState(orderData.customer_state || "");
+                 setCategory(orderData.category || "B2C");
+                 if (orderData.lines && orderData.lines.length > 0) {
+                     const loadedLines = orderData.lines.map((l: any) => {
+                         let sId = "";
+                         for (const s of data) {
+                             if (s.variants.some((v: any) => v.id === l.variant_id)) {
+                                 sId = String(s.id);
+                                 break;
+                             }
+                         }
+                         return {
+                             style_id: sId,
+                             variant_id: String(l.variant_id),
+                             qty: String(l.qty),
+                             unit_price: String(l.unit_price),
+                             gst_percent: String(l.gst_percent)
+                         };
+                     });
+                     setLines(loadedLines);
+                 }
+             })
+             .catch(e => setError("Failed to load invoice details"))
+             .finally(() => setLoadingOrder(false));
+        }
+      })
       .catch((e) => setStylesError(e instanceof Error ? e.message : "Failed to load styles"));
-  }, []);
+  }, [initialOrderId]);
 
   const updateLine = (i: number, patch: Partial<Line>) =>
     setLines((prev) => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
@@ -76,7 +112,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
     try {
       const token = getClientToken();
       const createdBy = token ? (decodeToken(token).sub ?? "web") : "web";
-      await api.post("/sales-orders", {
+      const payload = {
         customer_name: customerName.trim(),
         customer_phone: customerPhone || null,
         customer_address: customerAddress || null,
@@ -89,7 +125,14 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
           gst_percent: l.gst_percent || "5",
         })),
         created_by: createdBy,
-      }, token);
+      };
+
+      if (initialOrderId) {
+        await api.patch(`/sales-orders/${initialOrderId}`, payload, token);
+      } else {
+        await api.post("/sales-orders", payload, token);
+      }
+      
       setCustomerName(""); setCustomerPhone(""); setCustomerAddress(""); setCustomerState("");
       setLines([emptyLine()]);
       setOpen(false);
@@ -110,13 +153,18 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-accent" />
-          <span className="text-sm font-semibold text-foreground">New Invoice</span>
+          <span className="text-sm font-semibold text-foreground">
+            {initialOrderId ? `Edit Invoice #${initialOrderId}` : "New Invoice"}
+          </span>
         </div>
         <button onClick={() => { setOpen(false); onClose?.(); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Cancel
         </button>
       </div>
 
+      {loadingOrder ? (
+        <div className="p-10 text-center text-muted-foreground text-sm">Loading invoice...</div>
+      ) : (
       <div className="p-6 flex flex-col gap-6">
         {/* Customer */}
         <div>
@@ -247,6 +295,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
           <Button variant="ghost" onClick={() => { setOpen(false); onClose?.(); }}>Cancel</Button>
         </div>
       </div>
+      )}
     </div>
   );
 }

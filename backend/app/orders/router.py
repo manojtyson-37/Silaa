@@ -54,6 +54,7 @@ class SalesOrderUpdate(BaseModel):
     customer_address: Optional[str] = None
     customer_state: Optional[str] = None
     category: Optional[str] = None
+    lines: Optional[list[SalesOrderLineIn]] = None
 
 
 @router.post("/sales-orders", response_model=SalesOrderOut)
@@ -161,7 +162,23 @@ def update_sales_order(order_id: int, payload: SalesOrderUpdate, db: Session = D
         raise HTTPException(404, "SalesOrder not found")
     if order.status != SalesOrderStatus.DRAFT.value:
         raise HTTPException(400, "Can only update SalesOrder in DRAFT status")
-    for k, v in payload.model_dump(exclude_unset=True).items():
+    payload_data = payload.model_dump(exclude_unset=True)
+    
+    if "lines" in payload_data:
+        lines_data = payload_data.pop("lines")
+        if lines_data is not None:
+            # Delete old lines and insert new ones
+            db.query(SalesOrderLine).filter_by(sales_order_id=order_id).delete()
+            for l in lines_data:
+                db.add(SalesOrderLine(
+                    sales_order_id=order_id,
+                    variant_id=l["variant_id"],
+                    qty=l["qty"],
+                    unit_price=l["unit_price"],
+                    gst_percent=l["gst_percent"]
+                ))
+                
+    for k, v in payload_data.items():
         setattr(order, k, v)
     db.commit()
     return order

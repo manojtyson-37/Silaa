@@ -6,11 +6,12 @@ import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
 import OrderActions from "./OrderActions";
-import EditSOForm from "./EditSOForm";
+import { Edit2 } from "lucide-react";
 
 type Props = {
   orders: SalesOrder[];
   margins: OrderMarginTotal[];
+  onEdit: (id: number) => void;
 };
 
 const STATUS_OPTIONS = ["all", "draft", "fulfilled", "cancelled", "returned", "replaced"];
@@ -33,15 +34,27 @@ const STATUS_LABEL: Record<string, string> = {
   replaced: "Replaced",
 };
 
-export default function SOClient({ orders, margins }: Props) {
+export default function SOClient({ orders, margins, onEdit }: Props) {
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  
+  // Optimistic UI state
+  const [localOrders, setLocalOrders] = useState<SalesOrder[]>(orders);
+  
+  // Sync localOrders when orders prop changes (from router.refresh)
+  useMemo(() => {
+    setLocalOrders(orders);
+  }, [orders]);
 
   const handleRefresh = () => {
     setRefreshKey(k => k + 1);
     router.refresh();
+  };
+  
+  const handleDelete = (id: number) => {
+    setLocalOrders(prev => prev.filter(o => o.id !== id));
   };
 
   const marginByOrderId = useMemo(
@@ -51,7 +64,7 @@ export default function SOClient({ orders, margins }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return orders.filter((o) => {
+    return localOrders.filter((o) => {
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (q) {
         const inv = (o.invoice_number ?? "").toLowerCase();
@@ -60,7 +73,7 @@ export default function SOClient({ orders, margins }: Props) {
       }
       return true;
     });
-  }, [orders, search, statusFilter, refreshKey]);
+  }, [localOrders, search, statusFilter, refreshKey]);
 
   return (
     <div>
@@ -115,9 +128,13 @@ export default function SOClient({ orders, margins }: Props) {
                       {order.customer_name}
                     </span>
                     {order.status === "draft" && (
-                      <div className="ml-2">
-                        <EditSOForm order={order} onSaved={handleRefresh} />
-                      </div>
+                      <button
+                        onClick={() => onEdit(order.id)}
+                        className="ml-2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                        title="Edit Invoice"
+                      >
+                        <Edit2 size={16} />
+                      </button>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground max-w-sm truncate">
@@ -135,6 +152,7 @@ export default function SOClient({ orders, margins }: Props) {
                     orderId={order.id}
                     status={order.status}
                     onRefresh={handleRefresh}
+                    onDelete={() => handleDelete(order.id)}
                   />
                 </div>
               </div>
@@ -145,7 +163,7 @@ export default function SOClient({ orders, margins }: Props) {
 
       {filtered.length > 0 && (
         <p className="mt-3 text-xs text-muted-foreground text-right">
-          {filtered.length} of {orders.length} invoice{orders.length !== 1 ? "s" : ""}
+          {filtered.length} of {localOrders.length} invoice{localOrders.length !== 1 ? "s" : ""}
         </p>
       )}
     </div>
