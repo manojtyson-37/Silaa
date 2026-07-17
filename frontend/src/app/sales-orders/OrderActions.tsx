@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Printer, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 
@@ -86,10 +86,10 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
       {/* Print/PDF */}
         <button
           onClick={downloadInvoice}
-          title="Download invoice PDF"
+          title="Preview invoice"
           className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
         >
-          <Printer size={15} />
+          <ExternalLink size={15} />
         </button>
 
         {/* Status actions */}
