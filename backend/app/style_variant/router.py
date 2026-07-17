@@ -81,6 +81,19 @@ def create_variant(style_id: int, payload: VariantIn, db: Session = Depends(get_
     variant = StyleVariant(style_id=style_id, **payload.model_dump())
     db.add(variant)
     try:
+        db.flush()
+        if variant.qty > 0:
+            from app.finished_goods.models import FinishedGoodsLedgerEntry
+            from app.core.ledger_base import Direction
+            db.add(FinishedGoodsLedgerEntry(
+                variant_id=variant.id,
+                qty=variant.qty,
+                direction=Direction.IN.value,
+                txn_type="adjustment",
+                warehouse_id=1,
+                reason_code="manual_entry",
+                created_by="web"
+            ))
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -101,6 +114,25 @@ def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depend
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(variant, k, v)
     try:
+        db.flush()
+        # Sync the ledger balance with the new manual qty if provided
+        if payload.qty is not None:
+            from app.finished_goods.service import fg_balance
+            from app.finished_goods.models import FinishedGoodsLedgerEntry
+            from app.core.ledger_base import Direction
+            current_balance = fg_balance(db, variant_id, 1)
+            diff = payload.qty - current_balance
+            if diff != 0:
+                direction = Direction.IN.value if diff > 0 else Direction.OUT.value
+                db.add(FinishedGoodsLedgerEntry(
+                    variant_id=variant_id,
+                    qty=abs(diff),
+                    direction=direction,
+                    txn_type="adjustment",
+                    warehouse_id=1,
+                    reason_code="manual_entry",
+                    created_by="web"
+                ))
         db.commit()
     except IntegrityError:
         db.rollback()
