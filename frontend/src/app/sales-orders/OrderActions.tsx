@@ -71,19 +71,8 @@ export default function OrderActions({ orderId, status, onRefresh }: Props) {
     } finally { setLoading(false); }
   };
 
-  const downloadInvoice = async () => {
-    setError(null);
-    try {
-      const blob = await api.downloadBlob(`/sales-orders/${orderId}/invoice.pdf`, getClientToken());
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-so-${orderId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
-    }
+  const downloadInvoice = () => {
+    window.open(`/sales-orders/${orderId}/print`, "_blank");
   };
 
   return (

@@ -117,6 +117,16 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
     lines = db.query(SalesOrderLine).filter_by(sales_order_id=order_id).all()
+    total_amount = sum(Decimal(str(l.qty)) * Decimal(str(l.unit_price)) for l in lines)
+    
+    # fetch variant names
+    from app.style_variant.models import StyleVariant
+    variant_details = {}
+    for l in lines:
+        v = db.get(StyleVariant, l.variant_id)
+        if v:
+            variant_details[l.variant_id] = {"color": v.color, "size": v.size, "sku_code": v.sku_code}
+
     return {
         "id": order.id,
         "customer_name": order.customer_name,
@@ -125,10 +135,22 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         "customer_state": order.customer_state,
         "invoice_number": order.invoice_number,
         "status": order.status,
+        "category": order.category,
+        "created_at": order.created_at,
+        "total_amount": total_amount,
         "lines": [
-            {"id": l.id, "variant_id": l.variant_id, "qty": l.qty, "unit_price": l.unit_price, "gst_percent": l.gst_percent}
+            {
+                "id": l.id, 
+                "variant_id": l.variant_id, 
+                "qty": l.qty, 
+                "unit_price": l.unit_price, 
+                "gst_percent": l.gst_percent,
+                "variant_color": variant_details.get(l.variant_id, {}).get("color", ""),
+                "variant_size": variant_details.get(l.variant_id, {}).get("size", ""),
+                "variant_sku": variant_details.get(l.variant_id, {}).get("sku_code", ""),
+            }
             for l in lines
-        ],
+        ]
     }
 
 
