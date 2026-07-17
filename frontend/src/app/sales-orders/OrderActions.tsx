@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { Printer, ExternalLink, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 
@@ -77,19 +77,23 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
     } finally { setLoading(false); }
   };
 
-  const downloadInvoice = () => {
+  const printInvoice = () => {
     window.open(`/sales-orders/${orderId}/print`, "_blank");
+  };
+
+  const previewInvoice = () => {
+    window.open(`/sales-orders/${orderId}/print?preview=true`, "_blank");
   };
 
   return (
     <div className="flex items-center gap-2">
-      {/* Print/PDF */}
+      {/* Print */}
         <button
-          onClick={downloadInvoice}
-          title="Preview invoice"
+          onClick={printInvoice}
+          title="Print invoice"
           className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
         >
-          <ExternalLink size={15} />
+          <Printer size={15} />
         </button>
 
         {/* Status actions */}
@@ -146,6 +150,15 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
             <Trash2 size={15} />
           </button>
         )}
+
+      {/* Preview */}
+        <button
+          onClick={previewInvoice}
+          title="Preview invoice"
+          className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer ml-1"
+        >
+          <ExternalLink size={15} />
+        </button>
       
       {error && <div className="text-xs text-red-500 font-medium absolute -bottom-5 right-0 whitespace-nowrap">{error}</div>}
     </div>

@@ -34,7 +34,10 @@ export default function PrintClient({ order }: Props) {
   const orderDate = new Date(order.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
   useEffect(() => {
-    window.print();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("preview") !== "true") {
+      window.print();
+    }
   }, []);
 
   return (
