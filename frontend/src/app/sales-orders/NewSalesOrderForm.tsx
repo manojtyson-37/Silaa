@@ -36,6 +36,19 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Filters for styles
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [collectionFilter, setCollectionFilter] = useState("");
+
+  const uniqueCategories = Array.from(new Set(styles.map(s => s.category).filter(Boolean))) as string[];
+  const uniqueCollections = Array.from(new Set(styles.map(s => s.collection).filter(Boolean))) as string[];
+
+  const filteredStyles = styles.filter(s => {
+    if (categoryFilter && s.category !== categoryFilter) return false;
+    if (collectionFilter && s.collection !== collectionFilter) return false;
+    return true;
+  });
+
   useEffect(() => {
     api.get<StyleWithVariants[]>("/styles-with-variants", getClientToken())
       .then((data) => { setStyles(data); setStylesError(null); })
@@ -126,7 +139,21 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
         {/* Line items */}
         <div>
           {stylesError && <p className="text-xs text-destructive mb-2">Styles: {stylesError}</p>}
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Items</p>
+          
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Items</p>
+            <div className="flex gap-2">
+              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs py-1 h-7 bg-muted/30">
+                <option value="">All Categories</option>
+                {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </Select>
+              <Select value={collectionFilter} onChange={(e) => setCollectionFilter(e.target.value)} className="text-xs py-1 h-7 bg-muted/30">
+                <option value="">All Collections</option>
+                {uniqueCollections.map(c => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </div>
+          </div>
+          
           <div className="border border-border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -149,7 +176,7 @@ export default function NewSalesOrderForm({ onClose }: Props = {}) {
                       <td className="px-2 py-2">
                         <Select value={line.style_id} onChange={(e) => updateLine(i, { style_id: e.target.value, variant_id: "" })} className="text-xs">
                           <option value="">Pick style…</option>
-                          {styles.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          {filteredStyles.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </Select>
                       </td>
                       <td className="px-2 py-2">
