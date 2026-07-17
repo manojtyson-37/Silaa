@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Printer, ExternalLink, Trash2 } from "lucide-react";
+import { Printer, Eye, Trash2, MoreVertical } from "lucide-react";
 import { api } from "@/lib/api";
 import { getClientToken } from "@/lib/clientAuth";
 
@@ -17,6 +17,18 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
   const refresh = () => { onRefresh ? onRefresh() : router.refresh(); };
 
@@ -96,47 +108,56 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
           <Printer size={15} />
         </button>
 
-        {/* Status actions */}
-        {status === "draft" && (
-          <>
+        {/* Status actions menu */}
+        {(status === "draft" || status === "fulfilled") && (
+          <div className="relative" ref={menuRef}>
             <button
-              onClick={fulfill}
-              disabled={loading}
-              title="Mark as fulfilled"
-              className="px-2.5 py-1 text-xs font-medium rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer disabled:opacity-50"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
             >
-              Fulfill
+              <MoreVertical size={15} />
             </button>
-            <button
-              onClick={cancel}
-              disabled={loading}
-              title="Cancel invoice"
-              className="px-2.5 py-1 text-xs font-medium rounded text-muted-foreground bg-muted/50 hover:bg-muted border border-border transition-colors cursor-pointer disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </>
-        )}
-        
-        {status === "fulfilled" && (
-          <>
-            <button
-              onClick={returnOrder}
-              disabled={loading}
-              title="Mark as returned"
-              className="px-2.5 py-1 text-xs font-medium rounded text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              Return
-            </button>
-            <button
-              onClick={replaceOrder}
-              disabled={loading}
-              title="Mark as replaced"
-              className="px-2.5 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              Replace
-            </button>
-          </>
+            {menuOpen && (
+              <div className="absolute right-0 mt-1 w-32 bg-white border border-border rounded shadow-sm z-10 overflow-hidden py-1">
+                {status === "draft" && (
+                  <>
+                    <button
+                      onClick={() => { fulfill(); setMenuOpen(false); }}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-emerald-50 text-emerald-700 disabled:opacity-50"
+                    >
+                      Fulfill
+                    </button>
+                    <button
+                      onClick={() => { cancel(); setMenuOpen(false); }}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+                {status === "fulfilled" && (
+                  <>
+                    <button
+                      onClick={() => { returnOrder(); setMenuOpen(false); }}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-amber-50 text-amber-700 disabled:opacity-50"
+                    >
+                      Return
+                    </button>
+                    <button
+                      onClick={() => { replaceOrder(); setMenuOpen(false); }}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 text-blue-700 disabled:opacity-50"
+                    >
+                      Replace
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Delete — for cancelled, fulfilled, returned, replaced, AND draft */}
@@ -157,7 +178,7 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
           title="Preview invoice"
           className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer ml-1"
         >
-          <ExternalLink size={15} />
+          <Eye size={15} />
         </button>
       
       {error && <div className="text-xs text-red-500 font-medium absolute -bottom-5 right-0 whitespace-nowrap">{error}</div>}

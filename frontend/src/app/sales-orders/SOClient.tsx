@@ -136,6 +136,9 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                         <Edit2 size={16} />
                       </button>
                     )}
+                    <div className="ml-2">
+                      <InvoiceStatusPill status={order.status} />
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground max-w-sm truncate">
                     Category: {order.category || "—"}
@@ -146,7 +149,6 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-4 relative">
-                <InvoiceStatusPill status={order.status} />
                 <div className="flex items-center gap-2">
                   <OrderActions
                     orderId={order.id}
