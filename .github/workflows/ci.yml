@@ -20,6 +20,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql+psycopg://erp:erp@localhost:5432/erp
+      AUTH_SECRET_KEY: dummy_for_ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
