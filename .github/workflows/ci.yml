@@ -30,7 +30,7 @@ jobs:
       - name: Run migrations
         run: cd backend && alembic upgrade head
       - name: Run tests
-        run: cd backend && pytest -q
+        run: cd backend && python -m pytest -q
       - name: Generate OpenAPI spec
         run: cd backend && python -c "import json; from app.main import app; json.dump(app.openapi(), open('openapi.generated.json', 'w'), indent=2)"
       - name: Check committed spec matches generated spec
