@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
@@ -44,7 +44,7 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
   const [localOrders, setLocalOrders] = useState<SalesOrder[]>(orders);
   
   // Sync localOrders when orders prop changes (from router.refresh)
-  useMemo(() => {
+  useEffect(() => {
     setLocalOrders(orders);
   }, [orders]);
 

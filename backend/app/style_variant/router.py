@@ -87,7 +87,7 @@ def create_variant(style_id: int, payload: VariantIn, db: Session = Depends(get_
             from app.core.ledger_base import Direction
             db.add(FinishedGoodsLedgerEntry(
                 variant_id=variant.id,
-                qty=variant.qty,
+                quantity=variant.qty,
                 direction=Direction.IN.value,
                 txn_type="adjustment",
                 warehouse_id=1,
@@ -126,7 +126,7 @@ def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depend
                 direction = Direction.IN.value if diff > 0 else Direction.OUT.value
                 db.add(FinishedGoodsLedgerEntry(
                     variant_id=variant_id,
-                    qty=abs(diff),
+                    quantity=abs(diff),
                     direction=direction,
                     txn_type="adjustment",
                     warehouse_id=1,

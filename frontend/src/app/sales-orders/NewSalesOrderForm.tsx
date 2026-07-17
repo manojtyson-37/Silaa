@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Plus, Trash2, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, decodeToken, INDIAN_STATES, StyleWithVariants } from "@/lib/api";
@@ -36,6 +36,7 @@ export default function NewSalesOrderForm({ initialOrderId, onClose }: Props = {
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // Filters for styles
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -133,17 +134,25 @@ export default function NewSalesOrderForm({ initialOrderId, onClose }: Props = {
         await api.post("/sales-orders", payload, token);
       }
       
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+      setSaving(false);
+    }
+  };
+
+  // Close form only after refresh finishes
+  useEffect(() => {
+    if (saving && !isPending && !error) {
       setCustomerName(""); setCustomerPhone(""); setCustomerAddress(""); setCustomerState("");
       setLines([emptyLine()]);
       setOpen(false);
       onClose?.();
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
       setSaving(false);
     }
-  };
+  }, [isPending, saving, error, onClose]);
 
   if (!open) return null;
 

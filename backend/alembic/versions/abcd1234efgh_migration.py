@@ -26,12 +26,14 @@ def upgrade() -> None:
     op.add_column('style_variant', sa.Column('cost_price', sa.Numeric(precision=12, scale=2), nullable=True))
     
     # create foreign key constraint
-    op.create_foreign_key('fk_style_variant_fabric_item', 'style_variant', 'fabric_item', ['fabric_item_id'], ['id'])
-
+    with op.batch_alter_table('style_variant') as batch_op:
+        batch_op.create_foreign_key('fk_style_variant_fabric_item', 'fabric_item', ['fabric_item_id'], ['id'])
 
 def downgrade() -> None:
-    op.drop_constraint('fk_style_variant_fabric_item', 'style_variant', type_='foreignkey')
-    op.drop_column('style_variant', 'cost_price')
-    op.drop_column('style_variant', 'fabric_consumption')
-    op.drop_column('style_variant', 'fabric_item_id')
-    op.drop_column('sales_order', 'category')
+    with op.batch_alter_table('style_variant') as batch_op:
+        batch_op.drop_constraint('fk_style_variant_fabric_item', type_='foreignkey')
+        batch_op.drop_column('cost_price')
+        batch_op.drop_column('fabric_consumption')
+        batch_op.drop_column('fabric_item_id')
+    with op.batch_alter_table('sales_order') as batch_op:
+        batch_op.drop_column('category')

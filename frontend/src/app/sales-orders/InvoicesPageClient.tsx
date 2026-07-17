@@ -17,21 +17,21 @@ export default function InvoicesPageClient({ orders, margins }: Props) {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Invoices</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Create, track and print GST invoices</p>
-        </div>
-        {(!showForm && !editOrderId) && (
+      {/* Header - hide when form is open */}
+      {!showForm && !editOrderId && (
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Invoices</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Create, track and print GST invoices</p>
+          </div>
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-2 text-sm font-semibold bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors cursor-pointer shrink-0"
           >
             <Plus size={14} /> New Invoice
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Inline new/edit invoice form */}
       {(showForm || editOrderId) && (
@@ -41,8 +41,10 @@ export default function InvoicesPageClient({ orders, margins }: Props) {
         />
       )}
 
-      {/* Table */}
-      <SOClient orders={orders} margins={margins} onEdit={(id) => setEditOrderId(id)} />
+      {/* Table - hide when form is open */}
+      {!showForm && !editOrderId && (
+        <SOClient orders={orders} margins={margins} onEdit={(id) => setEditOrderId(id)} />
+      )}
     </>
   );
 }
