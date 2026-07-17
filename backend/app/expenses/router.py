@@ -349,7 +349,19 @@ def delete_expense(id: int, db: Session = Depends(get_db)):
 
     # Ledger rows are append-only at the ORM layer, so retracting the GRN
     # entries requires a bulk table delete (the sanctioned escape hatch).
+    fabric_item_ids = [lot.fabric_item_id for lot in exp.fabric_lots]
     for lot in exp.fabric_lots:
         db.execute(FabricLedgerEntry.__table__.delete().where(FabricLedgerEntry.fabric_lot_id == lot.id))
     db.delete(exp)  # cascades to lots and their landed costs
+    db.flush()
+    
+    # Clean up orphaned FabricItems
+    from app.fabric_inventory.models import FabricItem
+    for fab_id in set(fabric_item_ids):
+        lot_count = db.scalar(select(func.count()).select_from(FabricLot).where(FabricLot.fabric_item_id == fab_id))
+        if lot_count == 0:
+            fab = db.get(FabricItem, fab_id)
+            if fab:
+                db.delete(fab)
+                
     db.commit()

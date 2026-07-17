@@ -28,12 +28,14 @@ def create_sales_order(
     customer_phone: str | None = None,
     customer_address: str | None = None,
     customer_state: str | None = None,
+    category: str | None = None,
 ) -> SalesOrder:
     order = SalesOrder(
         customer_name=customer_name,
         customer_phone=customer_phone,
         customer_address=customer_address,
         customer_state=customer_state,
+        category=category,
         status=SalesOrderStatus.DRAFT.value,
     )
     session.add(order)
@@ -76,8 +78,9 @@ def fulfill_order(
                     )
                     balance = variant.qty
             if line.qty > balance:
+                variant_name = f"{variant.color} {variant.size}" if variant else ""
                 raise InsufficientStockError(
-                    f"Variant {line.variant_id}: requested {line.qty}, available {balance}"
+                    f"Variant {line.variant_id} ({variant_name}): requested {line.qty}, available {balance}"
                 )
             
         # Keep StyleVariant.qty in sync

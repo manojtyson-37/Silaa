@@ -28,6 +28,7 @@ class SalesOrderIn(BaseModel):
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
     customer_state: Optional[str] = None
+    category: Optional[str] = None
     lines: list[SalesOrderLineIn]
     created_by: str
 
@@ -38,6 +39,7 @@ class SalesOrderOut(BaseModel):
     customer_phone: Optional[str]
     customer_address: Optional[str]
     customer_state: Optional[str]
+    category: Optional[str]
     invoice_number: Optional[str]
     status: str
     created_at: Optional[datetime] = None
@@ -51,6 +53,7 @@ class SalesOrderUpdate(BaseModel):
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
     customer_state: Optional[str] = None
+    category: Optional[str] = None
 
 
 @router.post("/sales-orders", response_model=SalesOrderOut)
@@ -147,13 +150,30 @@ def delete_sales_order(order_id: int, db: Session = Depends(get_db)):
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
-    deletable = {SalesOrderStatus.DRAFT.value, SalesOrderStatus.CANCELLED.value, SalesOrderStatus.FULFILLED.value}
+    deletable = {
+        SalesOrderStatus.DRAFT.value,
+        SalesOrderStatus.CANCELLED.value,
+        SalesOrderStatus.FULFILLED.value,
+        SalesOrderStatus.RETURNED.value,
+        SalesOrderStatus.REPLACED.value,
+    }
     if order.status not in deletable:
         raise HTTPException(400, f"Cannot delete a SalesOrder in '{order.status}' status")
     if order.status == SalesOrderStatus.FULFILLED.value:
         from app.finished_goods.models import FinishedGoodsLedgerEntry
+        from app.style_variant.models import StyleVariant
         db.query(FinishedGoodsLedgerEntry).filter_by(reference_type="sales_order", reference_id=order_id).delete()
+        # Restore stock since it was fulfilled
+        lines = db.query(SalesOrderLine).filter_by(sales_order_id=order_id).all()
+        for line in lines:
+            variant = db.get(StyleVariant, line.variant_id)
+            if variant:
+                variant.qty += int(line.qty)
     db.query(SalesOrderLine).filter_by(sales_order_id=order_id).delete()
+    if order.status in {SalesOrderStatus.RETURNED.value, SalesOrderStatus.REPLACED.value}:
+        # Also clean up ledger entries from return/replace
+        from app.finished_goods.models import FinishedGoodsLedgerEntry
+        db.query(FinishedGoodsLedgerEntry).filter_by(reference_type="sales_order", reference_id=order_id).delete()
     db.delete(order)
     db.commit()
 
