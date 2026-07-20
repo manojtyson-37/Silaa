@@ -122,11 +122,29 @@ def cancel_order(session: Session, *, order: SalesOrder) -> SalesOrder:
     return order
 
 
-def return_order(session: Session, *, order: SalesOrder, created_by: str) -> SalesOrder:
+def return_order(
+    session: Session, 
+    *, 
+    order: SalesOrder, 
+    created_by: str,
+    refund_amount: Decimal | None = None,
+    refund_account_details: str | None = None,
+    notes: str | None = None,
+) -> SalesOrder:
     if order.status != SalesOrderStatus.FULFILLED.value:
         raise ValueError(f"Cannot return order in status {order.status}")
     
     order.status = SalesOrderStatus.RETURNED.value
+    
+    from app.orders.models import SalesOrderResolution
+    resolution = SalesOrderResolution(
+        sales_order_id=order.id,
+        resolution_type="return",
+        refund_amount=refund_amount,
+        refund_account_details=refund_account_details,
+        notes=notes,
+    )
+    session.add(resolution)
     
     # Restock inventory
     lines = session.query(SalesOrderLine).filter_by(sales_order_id=order.id).all()
@@ -153,11 +171,25 @@ def return_order(session: Session, *, order: SalesOrder, created_by: str) -> Sal
     return order
 
 
-def replace_order(session: Session, *, order: SalesOrder, created_by: str) -> SalesOrder:
+def replace_order(
+    session: Session, 
+    *, 
+    order: SalesOrder, 
+    created_by: str,
+    notes: str | None = None,
+) -> SalesOrder:
     if order.status != SalesOrderStatus.FULFILLED.value:
         raise ValueError(f"Cannot replace order in status {order.status}")
     
     order.status = SalesOrderStatus.REPLACED.value
+    
+    from app.orders.models import SalesOrderResolution
+    resolution = SalesOrderResolution(
+        sales_order_id=order.id,
+        resolution_type="replace",
+        notes=notes,
+    )
+    session.add(resolution)
     
     # Restock inventory just like return
     lines = session.query(SalesOrderLine).filter_by(sales_order_id=order.id).all()

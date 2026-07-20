@@ -45,3 +45,16 @@ class SalesOrderLine(Base):
     qty: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     gst_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, server_default="5")
+
+
+class SalesOrderResolution(Base):
+    __tablename__ = "sales_order_resolution"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sales_order_id: Mapped[int] = mapped_column(ForeignKey("sales_order.id"), nullable=False, unique=True)
+    resolution_type: Mapped[str] = mapped_column(String, nullable=False) # 'return' or 'replace'
+    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    refund_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=True)
+    refund_account_details: Mapped[str] = mapped_column(String, nullable=True)
+    notes: Mapped[str] = mapped_column(String, nullable=True)

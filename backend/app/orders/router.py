@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_default_warehouse_id
 from app.db import get_db
 from app.orders.invoice import generate_invoice_pdf
-from app.orders.models import SalesOrder, SalesOrderLine, SalesOrderStatus
+from app.orders.models import SalesOrder, SalesOrderLine, SalesOrderStatus, SalesOrderResolution
 from app.orders.service import InsufficientStockError, cancel_order, create_sales_order, fulfill_order, return_order, replace_order
 from app.style_variant.models import StyleVariant
 
@@ -34,6 +34,16 @@ class SalesOrderIn(BaseModel):
     created_by: str
 
 
+class SalesOrderResolutionOut(BaseModel):
+    resolution_type: str
+    resolved_at: datetime
+    refund_amount: Optional[Decimal] = None
+    refund_account_details: Optional[str] = None
+    notes: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
 class SalesOrderOut(BaseModel):
     id: int
     customer_name: str
@@ -46,6 +56,7 @@ class SalesOrderOut(BaseModel):
     created_at: Optional[datetime] = None
     total_amount: Optional[str] = None
     has_stock_issue: Optional[bool] = False
+    resolution: Optional[SalesOrderResolutionOut] = None
 
     model_config = {"from_attributes": True}
 
@@ -77,10 +88,13 @@ def create_order(payload: SalesOrderIn, db: Session = Depends(get_db)):
 def list_orders(db: Session = Depends(get_db)):
     orders = db.query(SalesOrder).order_by(SalesOrder.id.desc()).all()
     lines = db.query(SalesOrderLine).all()
+    resolutions = db.query(SalesOrderResolution).all()
     # group lines by order
     lines_by_order: dict[int, list[SalesOrderLine]] = {}
     for l in lines:
         lines_by_order.setdefault(l.sales_order_id, []).append(l)
+
+    res_by_order = {r.sales_order_id: r for r in resolutions}
 
     variants = db.query(StyleVariant).all()
     variant_qty_map = {v.id: v.qty for v in variants}
@@ -94,6 +108,9 @@ def list_orders(db: Session = Depends(get_db)):
         )
         out = SalesOrderOut.model_validate(order)
         out.total_amount = f"{total:.2f}" if total else None
+        
+        if order.id in res_by_order:
+            out.resolution = SalesOrderResolutionOut.model_validate(res_by_order[order.id])
         
         has_issue = False
         if order.status == "draft":
@@ -146,6 +163,18 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         if v:
             variant_details[l.variant_id] = {"color": v.color, "size": v.size, "sku_code": v.sku_code}
 
+    # fetch resolution
+    resolution = db.query(SalesOrderResolution).filter_by(sales_order_id=order_id).first()
+    res_dict = None
+    if resolution:
+        res_dict = {
+            "resolution_type": resolution.resolution_type,
+            "resolved_at": resolution.resolved_at,
+            "refund_amount": resolution.refund_amount,
+            "refund_account_details": resolution.refund_account_details,
+            "notes": resolution.notes,
+        }
+
     return {
         "id": order.id,
         "customer_name": order.customer_name,
@@ -157,6 +186,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         "category": order.category,
         "created_at": order.created_at,
         "total_amount": total_amount,
+        "resolution": res_dict,
         "lines": [
             {
                 "id": l.id, 
@@ -269,33 +299,45 @@ def cancel(
     return order
 
 
+class ReturnOrderIn(BaseModel):
+    refund_amount: Optional[Decimal] = None
+    refund_account_details: Optional[str] = None
+    notes: Optional[str] = None
+
 @router.post("/sales-orders/{order_id}/return", response_model=SalesOrderOut)
 def return_order_endpoint(
     order_id: int,
     created_by: str,
+    payload: Optional[ReturnOrderIn] = None,
     db: Session = Depends(get_db),
 ):
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
     try:
-        return_order(db, order=order, created_by=created_by)
+        kwargs = payload.model_dump() if payload else {}
+        return_order(db, order=order, created_by=created_by, **kwargs)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return order
 
 
+class ReplaceOrderIn(BaseModel):
+    notes: Optional[str] = None
+
 @router.post("/sales-orders/{order_id}/replace", response_model=SalesOrderOut)
 def replace_order_endpoint(
     order_id: int,
     created_by: str,
+    payload: Optional[ReplaceOrderIn] = None,
     db: Session = Depends(get_db),
 ):
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise HTTPException(404, "SalesOrder not found")
     try:
-        replace_order(db, order=order, created_by=created_by)
+        kwargs = payload.model_dump() if payload else {}
+        replace_order(db, order=order, created_by=created_by, **kwargs)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return order

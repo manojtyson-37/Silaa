@@ -151,6 +151,27 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                   <p className="text-xs text-muted-foreground mt-1">
                     Date: {fmtDate(order.created_at)} · Total: <span className="font-medium text-foreground">{fmtAmount(order.total_amount)}</span>
                   </p>
+                  
+                  {/* Resolution Timeline */}
+                  {order.resolution && (
+                    <div className="mt-2 text-xs text-muted-foreground bg-muted/30 px-3 py-1.5 rounded border border-border/50 inline-block">
+                      {order.resolution.resolution_type === "return" && (
+                        <span>
+                          ↩️ Returned on {fmtDate(order.resolution.resolved_at)}
+                          {order.resolution.refund_amount && ` · Refunded ₹${order.resolution.refund_amount}`}
+                          {order.resolution.refund_account_details && ` to ${order.resolution.refund_account_details}`}
+                        </span>
+                      )}
+                      {order.resolution.resolution_type === "replace" && (
+                        <span>
+                          🔄 Replaced on {fmtDate(order.resolution.resolved_at)}
+                        </span>
+                      )}
+                      {order.resolution.notes && (
+                        <div className="mt-0.5 opacity-80 italic">Notes: {order.resolution.notes}</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-4 relative">
@@ -158,6 +179,7 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                   <OrderActions
                     orderId={order.id}
                     status={order.status}
+                    totalAmount={order.total_amount}
                     onRefresh={handleRefresh}
                     onDelete={() => handleDelete(order.id)}
                   />

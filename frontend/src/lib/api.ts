@@ -153,6 +153,14 @@ export type PurchaseOrderLine = {
 };
 export type PurchaseOrderDetail = PurchaseOrder & { lines: PurchaseOrderLine[] };
 
+export interface SalesOrderResolution {
+  resolution_type: "return" | "replace";
+  resolved_at: string;
+  refund_amount?: number;
+  refund_account_details?: string;
+  notes?: string;
+}
+
 export type SalesOrder = {
   id: number;
   customer_name: string;
@@ -165,6 +173,7 @@ export type SalesOrder = {
   created_at: string | null;
   total_amount: string | null;
   has_stock_issue?: boolean;
+  resolution?: SalesOrderResolution;
 };
 export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string; gst_percent: string };
 export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };

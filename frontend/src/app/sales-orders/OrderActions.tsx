@@ -9,15 +9,19 @@ import { getClientToken } from "@/lib/clientAuth";
 type Props = {
   orderId: number;
   status: string;
+  totalAmount?: string | null;
   onRefresh?: () => void;
   onDelete?: () => void;
 };
 
-export default function OrderActions({ orderId, status, onRefresh, onDelete }: Props) {
+import ResolutionDialog from "./ResolutionDialog";
+
+export default function OrderActions({ orderId, status, totalAmount, onRefresh, onDelete }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resolutionType, setResolutionType] = useState<"return" | "replace" | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,26 +71,25 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
     } finally { setLoading(false); }
   };
 
-  const returnOrder = async () => {
+  const handleResolution = async (payload: any) => {
+    if (!resolutionType) return;
     setError(null);
     setLoading(true);
     try {
-      await api.post(`/sales-orders/${orderId}/return?created_by=web`, undefined, getClientToken());
+      await api.post(`/sales-orders/${orderId}/${resolutionType}?created_by=web`, payload, getClientToken());
       refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Action failed");
+      throw e;
     } finally { setLoading(false); }
   };
 
+  const returnOrder = async () => {
+    setResolutionType("return");
+  };
+
   const replaceOrder = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await api.post(`/sales-orders/${orderId}/replace?created_by=web`, undefined, getClientToken());
-      refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
-    } finally { setLoading(false); }
+    setResolutionType("replace");
   };
 
   const printInvoice = () => {
@@ -182,6 +185,16 @@ export default function OrderActions({ orderId, status, onRefresh, onDelete }: P
         </button>
       
       {error && <div className="text-xs text-red-500 font-medium absolute -bottom-5 right-0 whitespace-nowrap">{error}</div>}
+      
+      {resolutionType && (
+        <ResolutionDialog
+          isOpen={!!resolutionType}
+          onClose={() => setResolutionType(null)}
+          type={resolutionType}
+          totalAmount={totalAmount || null}
+          onSubmit={handleResolution}
+        />
+      )}
     </div>
   );
 }
