@@ -12,7 +12,7 @@ import json
 import os
 import time
 
-SECRET_KEY = os.environ["AUTH_SECRET_KEY"]
+SECRET_KEY = os.environ.get("AUTH_SECRET_KEY", "fallback_secret_please_change_in_production")
 TOKEN_TTL_SECONDS = 60 * 60 * 12  # 12h
 
 def hash_password(password: str) -> str:
