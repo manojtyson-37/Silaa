@@ -35,7 +35,7 @@ const SECTIONS: NavSection[] = [
   {
     title: "Finance",
     items: [
-      { href: "/sales-orders", label: "Invoices", icon: ScrollText },
+      { href: "/sales-orders", label: "Sales Orders", icon: ScrollText },
       { href: "/expenses", label: "Expenses", icon: Receipt },
       { href: "/reports", label: "Reports", icon: BarChart3 },
     ],
