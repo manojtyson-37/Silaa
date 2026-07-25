@@ -87,9 +87,14 @@ export default function NewSalesOrderForm({ initialOrderId, onClose }: Props = {
              })
              .catch(e => setError("Failed to load invoice details"))
              .finally(() => setLoadingOrder(false));
+        } else {
+            setLoadingOrder(false);
         }
       })
-      .catch((e) => setStylesError(e instanceof Error ? e.message : "Failed to load styles"));
+      .catch((e) => {
+          setStylesError(e instanceof Error ? e.message : "Failed to load styles");
+          setLoadingOrder(false);
+      });
   }, [initialOrderId]);
 
   const updateLine = (i: number, patch: Partial<Line>) =>
