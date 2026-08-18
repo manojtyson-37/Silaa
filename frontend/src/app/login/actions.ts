@@ -5,11 +5,17 @@ import { cookies } from "next/headers";
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
 export async function loginAction(username: string, password: string): Promise<string | null> {
-  const res = await fetch(`${BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/auth/login`, {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+  } catch {
+    return `Cannot reach server (${BASE}). Check your network or contact support.`;
+  }
   if (!res.ok) return "Invalid credentials";
 
   const { access_token } = await res.json();
