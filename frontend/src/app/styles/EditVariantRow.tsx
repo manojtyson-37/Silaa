@@ -51,7 +51,7 @@ export default function EditVariantRow({ v, fabrics }: { v: StyleVariant; fabric
         <td className="py-3 px-4 text-sm text-foreground tabular-nums">{v.cost_price || "—"}</td>
         <td className="py-3 px-4"><StatusPill value={v.status} /></td>
         <td className="py-3 px-4 text-right">
-          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-2 justify-end">
             <button
               onClick={() => setEditing(true)}
               className="p-1 rounded hover:bg-muted text-muted-foreground"
