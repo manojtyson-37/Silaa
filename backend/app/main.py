@@ -3,7 +3,10 @@ import os
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
 
@@ -21,6 +24,7 @@ from app.finished_goods import models as fg_models  # noqa: F401
 from app.orders import models as orders_models  # noqa: F401
 from app.expenses import models as expenses_models  # noqa: F401
 from app.auth import models as auth_models  # noqa: F401
+from app.combos import models as combo_models  # noqa: F401
 
 from app import wiring
 from app.procurement.router import router as procurement_router
@@ -37,6 +41,7 @@ from app.reports.router import router as reports_router
 from app.expenses.router import router as expenses_router
 from app.upload.router import router as upload_router
 from app.users.router import router as users_router
+from app.combos.router import router as combos_router, public_router as combos_public_router
 
 from contextlib import asynccontextmanager
 
@@ -67,6 +72,11 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Apparel ERP — Phase 1", version="0.1.0", lifespan=lifespan)
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 _default_origins = "http://localhost:3000,http://localhost:3001"
 _origins = os.environ.get("FRONTEND_ORIGINS", _default_origins).split(",")
@@ -114,6 +124,8 @@ app.include_router(reports_router, dependencies=_protected)
 app.include_router(expenses_router, dependencies=_protected)
 app.include_router(upload_router, dependencies=_protected)
 app.include_router(users_router) # dependencies are internal to users router
+app.include_router(combos_router, dependencies=_protected)
+app.include_router(combos_public_router)  # /combos/public + /orders/website — own key-based auth
 
 
 @app.get("/health")

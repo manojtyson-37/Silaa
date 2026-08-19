@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt, Users, ScrollText, Scissors } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, LogOut, Shirt, ClipboardList, BarChart3, Receipt, Users, ScrollText, Scissors, PackagePlus } from "lucide-react";
 import { clearClientToken } from "@/lib/clientAuth";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutGrid };
@@ -17,6 +17,7 @@ const SECTIONS: NavSection[] = [
     title: "Catalog",
     items: [
       { href: "/styles", label: "Styles & Variants", icon: Shirt },
+      { href: "/combos", label: "Combos", icon: PackagePlus },
     ],
   },
   {

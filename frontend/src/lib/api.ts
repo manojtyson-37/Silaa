@@ -117,6 +117,25 @@ export type StyleVariant = {
   cost_price?: string | null;
 };
 
+export type StyleVariantComboItem = {
+  id: number;
+  variant_id: number;
+  qty: number;
+  variant_color: string | null;
+  variant_size: string | null;
+  variant_sku: string | null;
+};
+
+export type StyleVariantCombo = {
+  id: number;
+  name: string;
+  description: string | null;
+  selling_price: string;
+  image_url: string | null;
+  is_active: boolean;
+  items: StyleVariantComboItem[];
+};
+
 export type ProductionOrder = {
   id: number;
   style_id: number;
