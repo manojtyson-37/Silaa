@@ -124,8 +124,8 @@ app.include_router(reports_router, dependencies=_protected)
 app.include_router(expenses_router, dependencies=_protected)
 app.include_router(upload_router, dependencies=_protected)
 app.include_router(users_router) # dependencies are internal to users router
+app.include_router(combos_public_router)  # must be before combos_router — /combos/public would otherwise match /combos/{id}
 app.include_router(combos_router, dependencies=_protected)
-app.include_router(combos_public_router)  # /combos/public + /orders/website — own key-based auth
 
 
 @app.get("/health")
