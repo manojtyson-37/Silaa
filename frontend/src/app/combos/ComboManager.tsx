@@ -203,7 +203,7 @@ export default function ComboManager({
       const created = await api.post("/combos", {
         ...draft,
         selling_price: parseFloat(draft.selling_price),
-      }, getClientToken());
+      }, getClientToken()) as StyleVariantCombo;
       setCombos([created, ...combos]);
       setCreating(false);
     } catch (err) {
@@ -219,7 +219,7 @@ export default function ComboManager({
       const updated = await api.patch(`/combos/${id}`, {
         ...draft,
         selling_price: parseFloat(draft.selling_price),
-      }, getClientToken());
+      }, getClientToken()) as StyleVariantCombo;
       setCombos(combos.map((c) => (c.id === id ? updated : c)));
       setEditingId(null);
     } catch (err) {
@@ -241,18 +241,18 @@ export default function ComboManager({
 
   return (
     <main className="max-w-4xl mx-auto px-8 py-10 flex flex-col gap-6">
-      <PageHeader
-        title="Combos"
-        subtitle="Bundle existing variants into combo products for the website"
-        action={
-          !creating ? (
-            <Button onClick={() => setCreating(true)}>
-              <Plus size={14} />
-              New Combo
-            </Button>
-          ) : undefined
-        }
-      />
+      <div className="flex items-start justify-between">
+        <PageHeader
+          title="Combos"
+          subtitle="Bundle existing variants into combo products for the website"
+        />
+        {!creating && (
+          <Button onClick={() => setCreating(true)}>
+            <Plus size={14} />
+            New Combo
+          </Button>
+        )}
+      </div>
 
       {creating && (
         <ComboForm
