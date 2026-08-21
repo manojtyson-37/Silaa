@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Search, Filter } from "lucide-react";
 import { SalesOrder, OrderMarginTotal } from "@/lib/api";
 import { StatusPill, Card } from "@/components/ui";
@@ -113,8 +114,9 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
           </Card>
         ) : (
           filtered.map((order) => (
-            <Card key={`${order.id}-${refreshKey}`} className="px-5 py-4 flex items-center justify-between group hover:border-accent hover:shadow-sm transition-all duration-200">
-              <div className="flex items-center gap-5">
+            <Card key={`${order.id}-${refreshKey}`} className="px-5 py-4 flex items-center justify-between group hover:border-accent hover:shadow-sm transition-all duration-200 relative">
+              <Link href={`/sales-orders/${order.id}`} className="absolute inset-0 z-0" aria-label={`View order ${order.invoice_number ?? order.id}`} />
+              <div className="flex items-center gap-5 relative z-10">
                 <div className="w-14 h-14 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
                   <span className="text-xs text-muted-foreground font-medium">SO</span>
                 </div>
@@ -174,7 +176,7 @@ export default function SOClient({ orders, margins, onEdit }: Props) {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-4 relative">
+              <div className="flex items-center gap-4 relative z-10">
                 <div className="flex items-center gap-2">
                   <OrderActions
                     orderId={order.id}

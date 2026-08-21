@@ -194,8 +194,24 @@ export type SalesOrder = {
   has_stock_issue?: boolean;
   resolution?: SalesOrderResolution;
 };
-export type SalesOrderLine = { id: number; variant_id: number; qty: string; unit_price: string; gst_percent: string };
-export type SalesOrderDetail = SalesOrder & { lines: SalesOrderLine[] };
+export type SalesOrderLine = {
+  id: number;
+  variant_id: number;
+  qty: string;
+  unit_price: string;
+  gst_percent: string;
+  variant_color?: string;
+  variant_size?: string;
+  variant_sku?: string;
+};
+export type SalesOrderDetail = SalesOrder & {
+  lines: SalesOrderLine[];
+  customer_phone?: string | null;
+  customer_address?: string | null;
+  customer_state?: string | null;
+  category?: string | null;
+  total_amount?: string | null;
+};
 
 export const INDIAN_STATES = [
   "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam",
