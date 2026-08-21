@@ -193,6 +193,8 @@ def website_order(
     lines: list[dict] = []
 
     for item in payload.items:
+        if item.qty < 1:
+            raise HTTPException(400, "Item qty must be >= 1")
         if item.combo_id:
             combo = db.get(StyleVariantCombo, item.combo_id)
             if not combo:
@@ -279,6 +281,8 @@ def website_order_check(
     """Validates stock availability without committing anything. 409 = out of stock."""
     lines: list[dict] = []
     for item in payload.items:
+        if item.qty < 1:
+            raise HTTPException(400, "Item qty must be >= 1")
         if item.combo_id:
             combo = db.get(StyleVariantCombo, item.combo_id)
             if not combo:
