@@ -71,6 +71,10 @@ class WebsiteOrderIn(BaseModel):
     items: list[WebsiteOrderItem]
 
 
+class WebsiteOrderCheckIn(BaseModel):
+    items: list[WebsiteOrderItem]
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _combo_with_variants(combo: StyleVariantCombo, db: Session) -> ComboOut:
@@ -264,3 +268,44 @@ def website_order(
 
     db.commit()
     return {"order_id": order.id, "invoice_number": order.invoice_number, "status": order.status}
+
+
+@public_router.post("/orders/website/check", status_code=200)
+def website_order_check(
+    payload: WebsiteOrderCheckIn,
+    db: Session = Depends(get_db),
+    _key: None = Depends(_verify_website_key),
+):
+    """Validates stock availability without committing anything. 409 = out of stock."""
+    lines: list[dict] = []
+    for item in payload.items:
+        if item.combo_id:
+            combo = db.get(StyleVariantCombo, item.combo_id)
+            if not combo:
+                raise HTTPException(404, f"Combo {item.combo_id} not found")
+            if not combo.is_active:
+                raise HTTPException(400, f"Combo '{combo.name}' is no longer available")
+            combo_items = db.query(StyleVariantComboItem).filter_by(combo_id=combo.id).all()
+            for ci in combo_items:
+                lines.append({"variant_id": ci.variant_id, "qty": ci.qty * item.qty})
+        elif item.variant_id:
+            variant = db.get(StyleVariant, item.variant_id)
+            if not variant:
+                raise HTTPException(404, f"Variant {item.variant_id} not found")
+            lines.append({"variant_id": item.variant_id, "qty": item.qty})
+        else:
+            raise HTTPException(400, "Each item must have combo_id or variant_id")
+
+    variant_deductions: dict[int, int] = {}
+    for line in lines:
+        vid = line["variant_id"]
+        variant_deductions[vid] = variant_deductions.get(vid, 0) + line["qty"]
+
+    for vid, deduct_qty in variant_deductions.items():
+        variant = db.get(StyleVariant, vid)
+        if not variant:
+            raise HTTPException(404, f"Variant {vid} not found")
+        if variant.qty < deduct_qty:
+            raise HTTPException(409, f"Insufficient stock for {variant.color} {variant.size} (available: {variant.qty}, requested: {deduct_qty})")
+
+    return {"ok": True}
